@@ -1,0 +1,7 @@
+{
+  "displayName": "Citadel design system",
+  "layer": "frontend",
+  "product": "Flutter",
+  "version": "3.0.2",
+  "summary": "Tokens, primitives and table/panel/callout components."
+}
