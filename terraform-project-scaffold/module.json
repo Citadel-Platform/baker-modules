@@ -1,0 +1,7 @@
+{
+  "displayName": "Terraform project scaffold",
+  "layer": "backend",
+  "product": "Terraform",
+  "version": "4.0.0",
+  "summary": "A client project: services, identities, Firestore, buckets, budgets."
+}
