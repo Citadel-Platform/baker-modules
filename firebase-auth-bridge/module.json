@@ -1,0 +1,7 @@
+{
+  "displayName": "Firebase auth bridge",
+  "layer": "middleware",
+  "product": "Firebase",
+  "version": "1.2.1",
+  "summary": "Sign-in, token refresh and the identity a Platform API call carries."
+}
