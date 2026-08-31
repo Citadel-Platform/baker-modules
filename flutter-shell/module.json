@@ -1,0 +1,7 @@
+{
+  "displayName": "Flutter shell",
+  "layer": "frontend",
+  "product": "Flutter",
+  "version": "2.1.0",
+  "summary": "Navigation, layout, routing and theming for a Citadel client app."
+}
