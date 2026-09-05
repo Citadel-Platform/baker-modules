@@ -1,0 +1,7 @@
+{
+  "displayName": "Agent context pack",
+  "layer": "frontend",
+  "product": "Dart",
+  "version": "1.0.0",
+  "summary": "What a coding agent working in a generated codebase needs to know before it changes anything."
+}
