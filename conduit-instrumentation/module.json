@@ -2,6 +2,6 @@
   "displayName": "Conduit instrumentation",
   "layer": "frontend",
   "product": "Dart",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "summary": "Drop-in capture: replay surface, attention regions, feedback widget."
 }

@@ -1,0 +1,18 @@
+{
+  "displayName": "CRM or internal tool — MVP shell",
+  "summary": "A running Flutter application with the design system, the platform client and the identity and telemetry seams. No screens the client has not asked for, and no invented data.",
+  "stack": "flutter-firebase",
+  "modules": [
+    "flutter-shell",
+    "citadel-design-system",
+    "platform-api-client",
+    "firebase-auth-bridge",
+    "conduit-instrumentation"
+  ],
+  "nextSteps": [
+    "flutter pub get",
+    "flutter analyze",
+    "flutter test",
+    "flutter run -d chrome --dart-define=CITADEL_PLATFORM_API_BASE_URL=<address>"
+  ]
+}

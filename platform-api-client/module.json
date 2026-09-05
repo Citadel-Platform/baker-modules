@@ -2,6 +2,6 @@
   "displayName": "Platform API client",
   "layer": "middleware",
   "product": "Dart",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "summary": "Typed client for the Platform API, with failures that read as sentences."
 }

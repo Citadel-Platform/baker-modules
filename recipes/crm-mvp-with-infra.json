@@ -1,0 +1,20 @@
+{
+  "displayName": "CRM or internal tool — MVP shell and project scaffold",
+  "summary": "The MVP shell, plus the Terraform for the client's own project. For a client whose application is deployed into a project of their own from the first day.",
+  "stack": "flutter-firebase",
+  "modules": [
+    "flutter-shell",
+    "citadel-design-system",
+    "platform-api-client",
+    "firebase-auth-bridge",
+    "conduit-instrumentation",
+    "terraform-project-scaffold"
+  ],
+  "nextSteps": [
+    "flutter pub get",
+    "flutter analyze",
+    "flutter test",
+    "cd infra && terraform init && terraform plan",
+    "flutter run -d chrome --dart-define=CITADEL_PLATFORM_API_BASE_URL=<address>"
+  ]
+}
