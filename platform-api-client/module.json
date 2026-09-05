@@ -3,5 +3,5 @@
   "layer": "middleware",
   "product": "Dart",
   "version": "2.4.0",
-  "summary": "Typed client for the Platform API, with failures that read as sentences."
+  "summary": "The platform address as a compile-time value, failures that read as sentences, and an unset address as a first-class state."
 }

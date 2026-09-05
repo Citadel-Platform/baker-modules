@@ -3,5 +3,5 @@
   "layer": "middleware",
   "product": "Firebase",
   "version": "1.3.0",
-  "summary": "Sign-in, token refresh and the identity a Platform API call carries."
+  "summary": "The identity seam: signed in, signed out, and the state a fresh build is actually in \u2014 no sign-in connected at all."
 }

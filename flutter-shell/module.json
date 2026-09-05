@@ -3,5 +3,5 @@
   "layer": "frontend",
   "product": "Flutter",
   "version": "2.2.0",
-  "summary": "Navigation, layout, routing and theming for a Citadel client app."
+  "summary": "Navigation, layout, theming and a records screen that stays empty until something real is connected to it."
 }

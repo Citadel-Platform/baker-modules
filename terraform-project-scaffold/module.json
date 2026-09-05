@@ -3,5 +3,5 @@
   "layer": "backend",
   "product": "Terraform",
   "version": "4.1.0",
-  "summary": "A client project: services, identities, Firestore, buckets, budgets."
+  "summary": "The client's own project as far as their application needs it: enabled services and the identity it runs as."
 }

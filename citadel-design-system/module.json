@@ -3,5 +3,5 @@
   "layer": "frontend",
   "product": "Flutter",
   "version": "3.1.0",
-  "summary": "Tokens, primitives and table/panel/callout components."
+  "summary": "Tokens, theme, and the page/panel/detail/notice primitives every screen is made of."
 }
