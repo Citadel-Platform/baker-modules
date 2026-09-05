@@ -1,5 +1,5 @@
 {
-  "displayName": "CRM or internal tool — MVP shell",
+  "displayName": "CRM or internal tool \u2014 MVP shell",
   "summary": "A running Flutter application with the design system, the platform client and the identity and telemetry seams. No screens the client has not asked for, and no invented data.",
   "stack": "flutter-firebase",
   "modules": [
@@ -7,7 +7,8 @@
     "citadel-design-system",
     "platform-api-client",
     "firebase-auth-bridge",
-    "conduit-instrumentation"
+    "conduit-instrumentation",
+    "agent-context-pack"
   ],
   "nextSteps": [
     "flutter pub get",

@@ -1,5 +1,5 @@
 {
-  "displayName": "CRM or internal tool — MVP shell and project scaffold",
+  "displayName": "CRM or internal tool \u2014 MVP shell and project scaffold",
   "summary": "The MVP shell, plus the Terraform for the client's own project. For a client whose application is deployed into a project of their own from the first day.",
   "stack": "flutter-firebase",
   "modules": [
@@ -8,7 +8,8 @@
     "platform-api-client",
     "firebase-auth-bridge",
     "conduit-instrumentation",
-    "terraform-project-scaffold"
+    "terraform-project-scaffold",
+    "agent-context-pack"
   ],
   "nextSteps": [
     "flutter pub get",
