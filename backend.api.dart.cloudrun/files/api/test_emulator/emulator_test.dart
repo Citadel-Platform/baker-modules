@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:api/api.dart';
+import 'package:googleapis/firestore/v1.dart' as fs;
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
@@ -99,6 +100,81 @@ void main() {
               as Map<String, Object?>;
       expect(fields, contains('expireAt'));
     });
+  });
+
+  group('AppFirestore', () {
+    late AppFirestore db;
+    setUp(() {
+      db = AppFirestore(
+        fs.FirestoreApi(owner, rootUrl: 'http://$store/'),
+        projectId: 'demo-store-${DateTime.now().microsecondsSinceEpoch}',
+      );
+    });
+
+    test('a conditional write fails once the document has changed', () async {
+      await db.commit(<fs.Write>[
+        db.set('things/a', <String, Object?>{'n': 1}),
+      ]);
+      final ({Map<String, Object?> data, String updateTime}) v = (await db
+          .getVersioned('things/a'))!;
+      await db.commit(<fs.Write>[
+        db.update('things/a', <String, Object?>{'n': 2}),
+      ]);
+      await expectLater(
+        db.commit(<fs.Write>[
+          db.updateIfUnchanged('things/a', <String, Object?>{
+            'n': 3,
+          }, v.updateTime),
+        ]),
+        throwsA(isA<fs.DetailedApiRequestError>()),
+      );
+      expect((await db.get('things/a'))!['n'], 2);
+      final ({Map<String, Object?> data, String updateTime}) now = (await db
+          .getVersioned('things/a'))!;
+      await db.commit(<fs.Write>[
+        db.updateIfUnchanged('things/a', <String, Object?>{
+          'n': 3,
+        }, now.updateTime),
+      ]);
+      expect((await db.get('things/a'))!['n'], 3);
+    });
+
+    test(
+      'values round-trip, and paging by id visits each document once',
+      () async {
+        final DateTime t = DateTime.utc(2026, 9, 27, 1, 2, 3);
+        await db.commit(<fs.Write>[
+          for (int i = 0; i < 7; i++)
+            db.set('rows/r$i', <String, Object?>{
+              'i': i,
+              'at': t,
+              'tags': <Object?>['a', 1, true],
+              'money': <String, Object?>{'minor': 1234, 'currency': 'SGD'},
+              'none': null,
+            }),
+        ]);
+        final Map<String, Object?> r0 = (await db.get('rows/r0'))!;
+        expect(r0['at'], t);
+        expect(r0['tags'], <Object?>['a', 1, true]);
+        expect(r0['money'], <String, Object?>{
+          'minor': 1234,
+          'currency': 'SGD',
+        });
+        expect(r0.containsKey('none'), isTrue);
+
+        final List<String> seen = <String>[];
+        String? after;
+        do {
+          final List<({String id, Map<String, Object?> data})> page = await db
+              .query('rows', limit: 3, startAfterId: after);
+          seen.addAll(
+            page.map((({String id, Map<String, Object?> data}) p) => p.id),
+          );
+          after = page.length == 3 ? page.last.id : null;
+        } while (after != null);
+        expect(seen, <String>['r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6']);
+      },
+    );
   });
 
   group('IdentityToolkitRevocation', () {

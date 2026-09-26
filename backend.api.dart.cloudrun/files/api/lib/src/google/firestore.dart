@@ -8,7 +8,11 @@ import 'package:googleapis/firestore/v1.dart' as fs;
 /// together: a message is never sent for a change that did not happen, and
 /// never lost for one that did.
 class AppFirestore {
-  AppFirestore(this.api, {required this.projectId, this.database = '(default)'});
+  AppFirestore(
+    this.api, {
+    required this.projectId,
+    this.database = '(default)',
+  });
 
   final fs.FirestoreApi api;
   final String projectId;
@@ -22,13 +26,43 @@ class AppFirestore {
 
   Future<Map<String, Object?>?> get(String path) async {
     try {
-      final fs.Document d = await api.projects.databases.documents.get(name(path));
+      final fs.Document d = await api.projects.databases.documents.get(
+        name(path),
+      );
       return decodeFields(d.fields);
     } on fs.DetailedApiRequestError catch (e) {
       if (e.status == 404) return null;
       rethrow;
     }
   }
+
+  /// The document at [path] with the time it was last written, which a
+  /// conditional write ([updateIfUnchanged]) is checked against.
+  Future<({Map<String, Object?> data, String updateTime})?> getVersioned(
+    String path,
+  ) async {
+    try {
+      final fs.Document d = await api.projects.databases.documents.get(
+        name(path),
+      );
+      return (data: decodeFields(d.fields), updateTime: d.updateTime!);
+    } on fs.DetailedApiRequestError catch (e) {
+      if (e.status == 404) return null;
+      rethrow;
+    }
+  }
+
+  /// A write changing [data]'s fields only if the document has not been
+  /// written since [updateTime]; the commit fails otherwise.
+  fs.Write updateIfUnchanged(
+    String path,
+    Map<String, Object?> data,
+    String updateTime,
+  ) => fs.Write(
+    update: fs.Document(name: name(path), fields: encodeFields(data)),
+    updateMask: fs.DocumentMask(fieldPaths: data.keys.toList()),
+    currentDocument: fs.Precondition(updateTime: updateTime),
+  );
 
   /// Applies [writes] atomically.
   Future<void> commit(List<fs.Write> writes) async {
@@ -65,6 +99,7 @@ class AppFirestore {
     ({String field, String op, Object? value})? range,
     String? orderBy,
     int limit = 100,
+    String? startAfterId,
   }) async {
     final List<fs.Filter> filters = <fs.Filter>[
       for (final MapEntry<String, Object?> e in equals.entries)
@@ -110,10 +145,25 @@ class AppFirestore {
                 fs.Order(field: fs.FieldReference(fieldPath: '__name__')),
               ],
               limit: limit,
+              // Paging by document id, for queries ordered by id alone.
+              startAt: startAfterId == null
+                  ? null
+                  : fs.Cursor(
+                      before: false,
+                      values: <fs.Value>[
+                        fs.Value(
+                          referenceValue: name('$collection/$startAfterId'),
+                        ),
+                      ],
+                    ),
             ),
           ),
           _root,
         );
+    assert(
+      startAfterId == null || orderBy == null,
+      'cursor paging is by id only',
+    );
     return <({String id, Map<String, Object?> data})>[
       for (final fs.RunQueryResponseElement r in rows)
         if (r.document case final fs.Document d)
@@ -143,7 +193,9 @@ fs.Value encodeValue(Object? v) => switch (v) {
   final String s => fs.Value(stringValue: s),
   final DateTime t => fs.Value(timestampValue: t.toUtc().toIso8601String()),
   final List<Object?> l => fs.Value(
-    arrayValue: fs.ArrayValue(values: <fs.Value>[for (final Object? x in l) encodeValue(x)]),
+    arrayValue: fs.ArrayValue(
+      values: <fs.Value>[for (final Object? x in l) encodeValue(x)],
+    ),
   ),
   final Map<String, Object?> m => fs.Value(
     mapValue: fs.MapValue(fields: encodeFields(m)),
@@ -175,9 +227,10 @@ Object? decodeValue(fs.Value v) {
 }
 
 /// Writes [path]'s [fields] as the server's clock, alongside a write.
-fs.Write withServerTime(fs.Write write, List<String> fields) => write
-  ..updateTransforms = <fs.FieldTransform>[
-    ...?write.updateTransforms,
-    for (final String f in fields)
-      fs.FieldTransform(fieldPath: f, setToServerValue: 'REQUEST_TIME'),
-  ];
+fs.Write withServerTime(fs.Write write, List<String> fields) =>
+    write
+      ..updateTransforms = <fs.FieldTransform>[
+        ...?write.updateTransforms,
+        for (final String f in fields)
+          fs.FieldTransform(fieldPath: f, setToServerValue: 'REQUEST_TIME'),
+      ];

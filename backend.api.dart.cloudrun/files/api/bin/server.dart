@@ -67,6 +67,7 @@ Future<void> main() async {
         : GoogleOidcVerifier(
             audience: env['OIDC_AUDIENCE']!,
             keys: GoogleOidcKeys(plain),
+            alsoAccept: <String>{?env['API_URL']},
           ),
   );
 

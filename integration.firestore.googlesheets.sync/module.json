@@ -1,0 +1,54 @@
+{
+  "displayName": "Firestore ⇄ Google Sheets sync",
+  "layer": "backend",
+  "product": "Google Sheets",
+  "version": "1.0.0",
+  "summary": "Two-way sync between Firestore collections and spreadsheet tabs, for clients who still work in sheets. Firestore is the source of truth: document changes reach their rows through a Firestore trigger and a task that writes the current state; a person's edits arrive signed from Apps Script and apply only where the app still holds what the sheet showed, else the row says there is a conflict. Typed columns, read-only columns, formula-safe writes, replay protection, nightly reconcile.",
+  "requires": [
+    "backend.api.dart.cloudrun"
+  ],
+  "inputs": {
+    "namePrefix": {
+      "label": "Resource name prefix",
+      "pattern": "^[a-z][a-z0-9-]{1,20}$",
+      "help": "Short, lower case, e.g. acme. Prefixes every resource, so two applications in one project do not collide."
+    },
+    "firestoreLocation": {
+      "label": "Firestore location",
+      "pattern": "^[a-z0-9-]+$",
+      "help": "Where the project's (default) Firestore database is, e.g. nam5 or asia-southeast1 (Firebase console > Firestore > the database's location)."
+    }
+  },
+  "insert": {
+    "api/lib/routes/app_routes.dart": {
+      "imports": [
+        "import '../sheets/sheets_routes.dart';"
+      ],
+      "routes": [
+        "...sheetsRoutes(context),"
+      ]
+    }
+  },
+  "merge": {
+    "infra/app.auto.tfvars.json": {
+      "firestore_location": "{{baker.firestoreLocation}}",
+      "app_secrets": {
+        "SHEETS_WEBHOOK_SECRET": "Signing secret shared with the spreadsheets' Apps Script"
+      },
+      "api_env_secrets": {
+        "SHEETS_WEBHOOK_SECRET": "SHEETS_WEBHOOK_SECRET"
+      },
+      "api_env": {
+        "SHEETS_COLLECTIONS": ""
+      }
+    }
+  },
+  "nextSteps": [
+    "Name the synced collections in api/lib/sheets/sheets_config.dart, and the same collections in infra/app.auto.tfvars.json as api_env.SHEETS_COLLECTIONS",
+    "Share each spreadsheet with the application's service account (Terraform output service_account_email), as Editor",
+    "cd infra && terraform apply",
+    "SECRET=\"$(openssl rand -base64 32)\"; printf %s \"$SECRET\" | scripts/secrets.sh set SHEETS_WEBHOOK_SECRET   # the same $SECRET goes in each Apps Script's SHEETS_SECRET",
+    "scripts/deploy_api.sh deploy",
+    "In each spreadsheet: Extensions > Apps Script, add sheets/apps_script/Code.gs and appsscript.json, set API_URL and SHEETS_SECRET in Script properties, run install()"
+  ]
+}

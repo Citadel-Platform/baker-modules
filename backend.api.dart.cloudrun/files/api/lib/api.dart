@@ -14,6 +14,7 @@ import 'src/store/idempotency.dart';
 
 export 'src/auth/google_oidc.dart';
 export 'src/google/firestore.dart';
+export 'src/google/scoped_token.dart';
 export 'src/google/tasks.dart';
 export 'src/auth/revocation.dart';
 export 'src/auth/token_verifier.dart';

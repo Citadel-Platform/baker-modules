@@ -13,11 +13,16 @@ class GoogleOidcVerifier {
   GoogleOidcVerifier({
     required this.audience,
     required this.keys,
+    this.alsoAccept = const <String>{},
     DateTime Function()? clock,
   }) : _clock = clock ?? DateTime.now;
 
   /// What the task or job was told to put in `aud`; set in Terraform.
   final String audience;
+
+  /// Other audiences to accept: Eventarc's push tokens are for the service's
+  /// own URL and cannot be given another.
+  final Set<String> alsoAccept;
   final SigningKeys keys;
   final DateTime Function() _clock;
 

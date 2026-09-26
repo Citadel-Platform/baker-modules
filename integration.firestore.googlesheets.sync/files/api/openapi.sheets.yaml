@@ -1,0 +1,29 @@
+# Sheets sync's routes; test/openapi_test.dart reads this with openapi.yaml.
+paths:
+  /internal/sheets/changed:
+    post:
+      summary: A document changed. Called by the Firestore trigger (Eventarc) with an OIDC token.
+      security: [{google: []}]
+      responses:
+        "200": {description: Whether a sync was queued.}
+  /internal/sheets/sync:
+    post:
+      summary: Writes one document to its row. Called by Cloud Tasks.
+      security: [{google: []}]
+      responses:
+        "204": {description: Written.}
+        "503": {description: Another sync of the row is running; Cloud Tasks retries.}
+  /internal/sheets/reconcile:
+    post:
+      summary: Repairs drift. Called nightly by Cloud Scheduler.
+      security: [{google: []}]
+      responses:
+        "200": {description: What was found, per collection.}
+  /webhooks/sheets:
+    post:
+      summary: Edits made in a synced sheet, HMAC-signed by its Apps Script.
+      security: []
+      responses:
+        "200": {description: What was applied, refused, invalid or in conflict.}
+        "401": {description: Signature not accepted.}
+        "409": {description: Already received (replay).}

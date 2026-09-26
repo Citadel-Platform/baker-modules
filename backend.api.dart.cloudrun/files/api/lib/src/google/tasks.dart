@@ -88,7 +88,10 @@ class MemoryTaskQueue implements TaskQueue {
     required Map<String, Object?> body,
     DateTime? notBefore,
   }) async {
-    if (queued.any((({String name, String path, Map<String, Object?> body}) t) => t.name == name)) {
+    if (queued.any(
+      (({String name, String path, Map<String, Object?> body}) t) =>
+          t.name == name,
+    )) {
       return;
     }
     queued.add((name: name, path: path, body: body));
