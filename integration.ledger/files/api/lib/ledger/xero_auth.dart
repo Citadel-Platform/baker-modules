@@ -49,11 +49,14 @@ class XeroAuth {
   final Uri apiRoot;
   final DateTime Function() _clock;
 
+  /// Xero's granular scopes, the only ones a Web app made since March 2026
+  /// is given; a request for the broad `accounting.transactions` is refused
+  /// at the consent screen. Nothing more than the module calls: invoices
+  /// (read and draft) and contacts.
   static const List<String> scopes = <String>[
     'offline_access',
-    'accounting.transactions',
+    'accounting.invoices',
     'accounting.contacts',
-    'accounting.settings.read',
   ];
 
   static const String connection = '_ledger/xero';

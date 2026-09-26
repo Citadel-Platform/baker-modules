@@ -69,7 +69,16 @@ void main() {
     test('the authorize link asks for offline access, with a one-use state', () async {
       final Uri url = await auth().authorizeUrl(uid: 'admin-1');
       expect(url.host, 'login.xero.com');
-      expect(url.queryParameters['scope'], contains('offline_access'));
+      // Granular scopes only: a Web app made since March 2026 is refused the
+      // broad ones (accounting.transactions) at the consent screen.
+      expect(
+        url.queryParameters['scope']!.split(' '),
+        unorderedEquals(<String>[
+          'offline_access',
+          'accounting.invoices',
+          'accounting.contacts',
+        ]),
+      );
       expect(url.queryParameters['state']!.length, greaterThanOrEqualTo(40));
 
       final XeroAuth a = auth();
