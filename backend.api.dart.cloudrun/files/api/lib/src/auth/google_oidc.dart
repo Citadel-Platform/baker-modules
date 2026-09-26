@@ -27,7 +27,16 @@ class GoogleOidcVerifier {
   final DateTime Function() _clock;
 
   /// The caller's service account email, once everything checks.
-  Future<String> verify(String token) async {
+  ///
+  /// [addressedTo] is where this request arrived, as `https://host/path`.
+  /// Eventarc signs its push for the address it delivers to, which is Cloud
+  /// Run's hashed legacy URL plus the route's path, an address that only
+  /// exists once the service does and so cannot be configured in advance
+  /// (seen live 26/09/26: every push refused). A token naming the address it
+  /// was actually sent to, or that address's origin, is accepted: one minted
+  /// for another service or route names somewhere else, so the audience still
+  /// stops a replay, and the caller's identity is checked separately.
+  Future<String> verify(String token, {Uri? addressedTo}) async {
     final List<String> parts = token.split('.');
     if (parts.length != 3) throw const TokenRejected('not a JWT');
     final Map<String, Object?> header = _json(parts[0]);
@@ -62,8 +71,17 @@ class GoogleOidcVerifier {
     if (iss != 'https://accounts.google.com' && iss != 'accounts.google.com') {
       throw TokenRejected('issuer $iss');
     }
-    if (claims['aud'] != audience) {
-      throw TokenRejected('audience ${claims['aud']}');
+    final Object? aud = claims['aud'];
+    final Set<String> accepted = <String>{
+      audience,
+      ...alsoAccept,
+      if (addressedTo != null) ...<String>{
+        '${addressedTo.scheme}://${addressedTo.authority}',
+        '${addressedTo.scheme}://${addressedTo.authority}${addressedTo.path}',
+      },
+    };
+    if (aud is! String || !accepted.contains(aud)) {
+      throw TokenRejected('audience $aud');
     }
     final Object? email = claims['email'];
     if (email is! String || claims['email_verified'] != true) {

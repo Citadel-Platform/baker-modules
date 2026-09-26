@@ -109,6 +109,7 @@ class SheetsSync {
     try {
       final ({Map<String, Object?> data, String updateTime})? doc = await db
           .getVersioned(documentPath);
+      await _ensureHeader(m);
       final List<List<Object?>> rows = await sheets.rows(
         m.spreadsheetId,
         m.tab,
@@ -152,6 +153,22 @@ class SheetsSync {
       }
     } finally {
       await db.commit(<fs.Write>[db.delete(lock)]);
+    }
+  }
+
+  /// Writes the mapping's header row into an empty tab.
+  ///
+  /// Row 1 is the header and rows are read from row 2, so without one the
+  /// first row synced lands where no later sync looks. And an append finds
+  /// the end of the table from row 1: on an empty tab, two documents synced at
+  /// once both appended at A1 and one overwrote the other (seen live,
+  /// 26/09/26). Writing the same header twice is harmless, so concurrent
+  /// syncs need no lock for it. A header that differs is left alone for the
+  /// nightly reconcile to report; this never writes over a person's row 1.
+  Future<void> _ensureHeader(SheetMapping m) async {
+    final List<Object?> head = await sheets.header(m.spreadsheetId, m.tab);
+    if (head.every((Object? c) => '$c'.trim().isEmpty)) {
+      await sheets.writeRow(m.spreadsheetId, m.tab, 1, m.headers);
     }
   }
 

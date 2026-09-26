@@ -78,7 +78,7 @@ Handler webServer({required Directory publicDir, Handler? routes}) {
       .addMiddleware(_headers())
       .addMiddleware(_gzip())
       .addHandler((Request request) {
-        if (request.url.path == 'healthz') return Response.ok('ok');
+        if (request.url.path == 'health') return Response.ok('ok');
         return cascade(request);
       });
 }

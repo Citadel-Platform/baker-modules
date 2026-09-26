@@ -108,6 +108,39 @@ void main() {
     expect(sheet.data.first[4], 'deleted in the app');
   });
 
+  // Found live on 26/09/26: nothing wrote the header until the Apps Script's
+  // install() ran, so the first row landed in row 1 where no sync reads, and
+  // two new documents synced at once both appended at A1.
+  test('an empty tab gets its header, and new rows go beneath it', () async {
+    sheet.headers = <Object?>[];
+    await put('a1', <String, Object?>{'name': 'Ann'});
+    await put('b2', <String, Object?>{'name': 'Ben'});
+    await Future.wait(<Future<void>>[
+      sync.sync('students/a1'),
+      sync.sync('students/b2'),
+    ]);
+    expect(sheet.headers, students.headers);
+    expect(
+      sheet.data.map((List<Object?> r) => r.first),
+      unorderedEquals(<String>['a1', 'b2']),
+    );
+
+    await sync.sync('students/a1');
+    expect(
+      sheet.data,
+      hasLength(2),
+      reason: 'found under the header, not appended again',
+    );
+  });
+
+  test('a header already there is never rewritten', () async {
+    sheet.headers = <Object?>['Something', 'a person', 'typed'];
+    await put('a1', <String, Object?>{'name': 'Ann'});
+    await sync.sync('students/a1');
+    expect(sheet.headerWrites, 0);
+    expect(sheet.headers.first, 'Something');
+  });
+
   test('a sync of the same row already running makes the task retry', () async {
     await put('a1', <String, Object?>{'name': 'Ann'});
     await db.commit(<fs.Write>[
@@ -319,10 +352,12 @@ void main() {
   });
 }
 
+/// A tab: row 1 is [headers] (empty until written), rows from 2 are [data].
 class _Sheet implements SheetsGateway {
-  _Sheet(this.headers);
-  final List<String> headers;
+  _Sheet(List<String> headers) : headers = List<Object?>.of(headers);
+  List<Object?> headers;
   final List<List<Object?>> data = <List<Object?>>[];
+  int headerWrites = 0;
 
   @override
   Future<List<Object?>> header(String s, String t) async => headers;
@@ -334,8 +369,15 @@ class _Sheet implements SheetsGateway {
   Future<void> appendRow(String s, String t, List<Object?> v) async =>
       data.add(List<Object?>.of(v));
   @override
-  Future<void> writeRow(String s, String t, int row, List<Object?> v) async =>
+  Future<void> writeRow(String s, String t, int row, List<Object?> v) async {
+    if (row == 1) {
+      headers = List<Object?>.of(v);
+      headerWrites++;
+    } else {
       data[row - 2] = List<Object?>.of(v);
+    }
+  }
+
   @override
   Future<void> writeCell(
     String s,

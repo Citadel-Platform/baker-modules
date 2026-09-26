@@ -95,7 +95,7 @@ Future<Response> _dispatch(
       if (oidc == null) throw Problem.unavailable;
       final String caller = await _authenticate(
         request,
-        (String t) => oidc.verify(t),
+        (String t) => oidc.verify(t, addressedTo: _addressedTo(request)),
       );
       if (caller != serviceAccount) throw Problem.notPermitted;
     case SignedInApiAccess(:final bool checkRevoked):
@@ -136,6 +136,14 @@ Future<VerifiedUser> _signedIn(
   }
   return user;
 }
+
+/// Where the caller sent this request, as the caller saw it: Cloud Run
+/// terminates TLS, so the scheme is https whatever the container was told.
+Uri _addressedTo(Request request) => Uri(
+  scheme: 'https',
+  host: request.requestedUri.host,
+  path: request.requestedUri.path,
+);
 
 Future<T> _authenticate<T>(
   Request request,

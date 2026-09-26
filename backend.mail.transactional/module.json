@@ -47,10 +47,10 @@
   },
   "nextSteps": [
     "Resend: verify the sending domain, and create a sending-only API key",
-    "cd infra && terraform apply",
     "printf %s \"$RESEND_KEY\" | scripts/secrets.sh set RESEND_API_KEY",
-    "Resend: add a webhook to the mail_webhook_url output for email.delivered, email.bounced, email.complained and email.suppressed",
+    "Resend: add a webhook to the mail_webhook_url output (known once the secrets exist) for email.delivered, email.bounced, email.complained and email.suppressed",
     "printf %s \"$WHSEC\" | scripts/secrets.sh set MAIL_WEBHOOK_SECRET",
+    "cd infra && terraform apply",
     "scripts/deploy_api.sh deploy"
   ]
 }

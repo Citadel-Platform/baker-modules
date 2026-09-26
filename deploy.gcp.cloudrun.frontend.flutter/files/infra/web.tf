@@ -76,7 +76,7 @@ resource "google_cloud_run_v2_service" "web" {
 
       startup_probe {
         http_get {
-          path = "/healthz"
+          path = "/health"
         }
         period_seconds    = 2
         failure_threshold = 10

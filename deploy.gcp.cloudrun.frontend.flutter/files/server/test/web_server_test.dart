@@ -102,7 +102,7 @@ void main() {
   });
 
   test('health', () async {
-    expect(await (await get('/healthz')).readAsString(), 'ok');
+    expect(await (await get('/health')).readAsString(), 'ok');
   });
 
   test('refuses to start with no build', () {

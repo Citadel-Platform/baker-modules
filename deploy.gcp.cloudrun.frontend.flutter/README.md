@@ -14,7 +14,7 @@ simpler and cheaper; the two cannot share a recipe.
 - **`server/`**, its own Dart package: `shelf` serving the build with the SPA
   fallback (a path without an extension is a page of the app; a missing file
   is a real 404), the same security headers as the Hosting module, gzip for
-  text, `/healthz`, one JSON log line per request in Cloud Logging's format
+  text, `/health`, one JSON log line per request in Cloud Logging's format
   (paths only, never query strings), GET/HEAD only, and a clean exit on
   SIGTERM. Server-side routes go in `routes()` in `bin/server.dart`.
 - **`infra/web.tf`**, on the Terraform scaffold: an Artifact Registry

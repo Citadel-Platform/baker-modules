@@ -22,8 +22,9 @@
     }
   },
   "nextSteps": [
-    "cd infra && terraform init && terraform validate && terraform plan",
-    "printf %s \"$VALUE\" | scripts/secrets.sh set NAME"
+    "cd infra && terraform init && terraform validate && terraform apply -target=google_secret_manager_secret.app   # the secrets alone, first",
+    "printf %s \"$VALUE\" | scripts/secrets.sh set NAME   # for every name scripts/secrets.sh unset prints; the steps below say where each value comes from",
+    "scripts/secrets.sh unset   # prints nothing before the first full terraform apply: Cloud Run will not start a service naming a secret with no value"
   ],
   "merge": {
     "infra/app.auto.tfvars.json": {

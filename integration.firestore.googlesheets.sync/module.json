@@ -44,10 +44,10 @@
     }
   },
   "nextSteps": [
-    "Name the synced collections in api/lib/sheets/sheets_config.dart, and the same collections in infra/app.auto.tfvars.json as api_env.SHEETS_COLLECTIONS",
-    "Share each spreadsheet with the application's service account (Terraform output service_account_email), as Editor",
-    "cd infra && terraform apply",
     "SECRET=\"$(openssl rand -base64 32)\"; printf %s \"$SECRET\" | scripts/secrets.sh set SHEETS_WEBHOOK_SECRET   # the same $SECRET goes in each Apps Script's SHEETS_SECRET",
+    "Name the synced collections in api/lib/sheets/sheets_config.dart, and the same collections in infra/app.auto.tfvars.json as api_env.SHEETS_COLLECTIONS",
+    "cd infra && terraform apply",
+    "Share each spreadsheet with the application's service account (Terraform output service_account_email), as Editor",
     "scripts/deploy_api.sh deploy",
     "In each spreadsheet: Extensions > Apps Script, add sheets/apps_script/Code.gs and appsscript.json, set API_URL and SHEETS_SECRET in Script properties, run install()"
   ]

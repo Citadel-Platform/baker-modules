@@ -2,6 +2,7 @@
 # Sets and retires the values of the application's secrets.
 #
 #   scripts/secrets.sh list                    the secrets, and their versions
+#   scripts/secrets.sh unset                   those with no value yet; fails if any
 #   scripts/secrets.sh set NAME                reads the value from standard input
 #   scripts/secrets.sh disable NAME VERSION    stops a version being read
 #   scripts/secrets.sh destroy NAME VERSION    deletes a version's value for good
@@ -47,6 +48,22 @@ for name, sid in sorted(json.load(sys.stdin).items()):
       echo "$n ($id)"
       gc secrets versions list "$id" --format='table(name,state,createTime)' || true
     done
+    ;;
+  unset)
+    # Cloud Run refuses to start a service naming a secret with no enabled
+    # version, so every declared secret needs a value before the first full
+    # `terraform apply`. Lists the ones that do not, and fails while any remain.
+    missing=0
+    while read -r n id; do
+      if [[ -z "$(gc secrets versions list "$id" --filter='state:ENABLED' --limit 1 --format='value(name)' 2>/dev/null)" ]]; then
+        echo "$n"
+        missing=1
+      fi
+    done < <(terraform -chdir=infra output -json app_secret_ids | python3 -c "
+import json, sys
+for name, sid in sorted(json.load(sys.stdin).items()):
+    print(name, sid)")
+    exit "$missing"
     ;;
   set)
     [[ -n "$name" ]] || { echo "Usage: scripts/secrets.sh set NAME < value" >&2; exit 64; }

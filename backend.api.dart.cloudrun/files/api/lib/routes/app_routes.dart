@@ -64,7 +64,9 @@ List<ApiRoute> appRoutes(AppContext context) => <ApiRoute>[
   // baker:routes
   ApiRoute(
     'GET',
-    '/healthz',
+    // Not /healthz: Cloud Run reserves some paths ending in "z" at its front
+    // end, so a check from outside never reaches the container.
+    '/health',
     (_) async => Response.ok('ok'),
     access: const ApiAccess.public(),
     summary: 'Liveness, for Cloud Run.',

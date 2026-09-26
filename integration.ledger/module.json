@@ -46,10 +46,10 @@
     }
   },
   "nextSteps": [
-    "cd infra && terraform apply",
-    "Xero developer portal: create a Web app; add the xero_redirect_uri output as its redirect URI",
+    "Xero developer portal: create a Web app; its redirect URI is the xero_redirect_uri output (known once the secrets exist)",
     "printf %s \"$XERO_CLIENT_ID\" | scripts/secrets.sh set XERO_CLIENT_ID",
     "printf %s \"$XERO_CLIENT_SECRET\" | scripts/secrets.sh set XERO_CLIENT_SECRET",
+    "cd infra && terraform apply",
     "scripts/deploy_api.sh deploy",
     "As an admin: POST /v1/ledger/xero/connect, open the url, choose the organisation; GET /v1/ledger/status reads connected"
   ]

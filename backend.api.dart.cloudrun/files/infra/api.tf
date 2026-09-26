@@ -167,7 +167,7 @@ resource "google_cloud_run_v2_service" "api" {
 
       startup_probe {
         http_get {
-          path = "/healthz"
+          path = "/health"
         }
         period_seconds    = 2
         failure_threshold = 10
@@ -256,8 +256,16 @@ output "api_service" {
   value = google_cloud_run_v2_service.api.name
 }
 
+# Cloud Run gives a service two addresses, the project-number form tasks are
+# told and a hashed legacy one, and `uri` reports the legacy one. This is the
+# address tasks use when Cloud Run lists it among the service's own, and the
+# legacy one otherwise, so deploy_api.sh's check compares like with like.
 output "api_url" {
-  value = google_cloud_run_v2_service.api.uri
+  value = (
+    contains(google_cloud_run_v2_service.api.urls, local.api_url)
+    ? local.api_url
+    : google_cloud_run_v2_service.api.uri
+  )
 }
 
 output "api_url_deterministic" {

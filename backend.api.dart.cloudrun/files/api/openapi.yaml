@@ -35,7 +35,7 @@ components:
         application/problem+json:
           schema: {$ref: '#/components/schemas/Problem'}
 paths:
-  /healthz:
+  /health:
     get:
       summary: Liveness, for Cloud Run.
       security: []

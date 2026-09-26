@@ -120,7 +120,7 @@ void main() {
   };
 
   test('public and signed-in routes, with API headers on everything', () async {
-    final Response health = await send('GET', '/healthz');
+    final Response health = await send('GET', '/health');
     expect(await health.readAsString(), 'ok');
     expect(health.headers['cache-control'], 'no-store');
     expect(health.headers['x-content-type-options'], 'nosniff');
@@ -389,7 +389,7 @@ void main() {
       );
       final Response get = await send(
         'GET',
-        '/healthz',
+        '/health',
         headers: <String, String>{'origin': 'https://app.example.com'},
       );
       expect(

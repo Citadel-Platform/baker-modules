@@ -13,7 +13,8 @@
 #
 # deploy: from a committed tree only; builds for linux/amd64 (what Cloud Run
 # runs), pushes, starts a revision with NO traffic at its own tagged address,
-# checks /healthz there and that responses carry the security headers, and
+# checks /health there (never a path ending in "z": Cloud Run reserves some
+# at its front end, so /healthz never reaches the container) and that responses carry the security headers, and
 # only then moves traffic. A revision that starts but cannot serve never
 # reaches anyone.
 set -euo pipefail
@@ -83,9 +84,9 @@ case "$command" in
     [[ -n "$url" ]] || { echo "Cloud Run gave the revision no tagged address. Traffic not moved." >&2; exit 1; }
 
     echo "Checking $url before it takes traffic."
-    curl -fsS "$url/healthz" >/dev/null \
-      || { echo "The new revision does not answer /healthz. Traffic not moved." >&2; exit 1; }
-    curl -sS -o /dev/null -D - "$url/healthz" | grep -qi '^x-content-type-options: nosniff' \
+    curl -fsS "$url/health" >/dev/null \
+      || { echo "The new revision does not answer /health. Traffic not moved." >&2; exit 1; }
+    curl -sS -o /dev/null -D - "$url/health" | grep -qi '^x-content-type-options: nosniff' \
       || { echo "The new revision is missing its security headers. Traffic not moved." >&2; exit 1; }
 
     gc run services update-traffic "$service" --region "$region" --to-tags "$tag=100"

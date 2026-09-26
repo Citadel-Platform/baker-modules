@@ -1,0 +1,10 @@
+# Terraform's working files. Providers are downloaded by `terraform init`;
+# state records every resource and may hold values from them, so it lives
+# here only until a remote backend is configured, and is never committed.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+# The lock file pins provider versions: commit it.
