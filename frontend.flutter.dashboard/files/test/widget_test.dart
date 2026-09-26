@@ -107,6 +107,31 @@ void main() {
     );
   });
 
+  testWidgets('the signed-in shell fits a phone', (WidgetTester t) async {
+    // The view, not just the surface: layout decisions read MediaQuery.
+    t.view
+      ..physicalSize = const Size(390, 800)
+      ..devicePixelRatio = 1;
+    addTearDown(t.view.reset);
+    await t.pumpWidget(
+      ProviderScope(
+        overrides: <Override>[
+          sessionProvider.overrideWith(
+            (Ref ref) => Stream<Session>.value(
+              const SignedIn(uid: 'u1', email: 'a@example.com', roles: <String>{}),
+            ),
+          ),
+        ],
+        child: const ClientApp(),
+      ),
+    );
+    await t.pumpAndSettle();
+    expect(find.text('Nothing here yet'), findsOneWidget);
+    expect(find.byType(AppBar), findsOneWidget, reason: 'compact layout');
+    expect(find.byType(NavigationRail), findsNothing);
+    expect(t.takeException(), isNull, reason: 'no layout overflow');
+  });
+
   test('text colours are legible on every surface, in both modes', () {
     // WCAG 2.x relative luminance and contrast ratio.
     double luminance(Color c) {
@@ -123,6 +148,12 @@ void main() {
     }
 
     for (final AppColors c in <AppColors>[AppColors.light, AppColors.dark]) {
+      // A filled button's label on its accent fill.
+      expect(
+        contrast(c.onAccent, c.accent),
+        greaterThanOrEqualTo(4.5),
+        reason: 'onAccent on accent (${c == AppColors.light ? 'light' : 'dark'})',
+      );
       for (final Color ground in <Color>[
         c.background,
         c.surface,

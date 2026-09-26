@@ -24,7 +24,14 @@ Firebase Authentication for a `frontend.flutter.dashboard` application.
   `FIREBASE_AUTH_EMULATOR_HOST` is set, and refuses a `demo-` project
   otherwise.
 - **Emulators**: `USE_FIREBASE_EMULATORS=true` at build time points the app at
-  them.
+  them. On the web, FlutterFire restores a stored session inside
+  `initializeApp`, a network call made before the app can connect the
+  emulator; it re-connects the emulator first only on `localhost` in a debug
+  build. Anywhere else the restore goes to production, and the later emulator
+  connection is refused silently, so an emulator build could sign in to the
+  real project. `startFirebase` therefore forgets the stored session in that
+  case before starting Firebase (found driving a release build on
+  `127.0.0.1`). A reload signs you out in that mode.
 
 ## Tested
 

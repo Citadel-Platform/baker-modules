@@ -330,6 +330,10 @@ class _DataTableKitState<T> extends State<DataTableKit<T>> {
 
   bool get _selectable => widget.bulkActions.isNotEmpty;
 
+  /// Sorting means nothing while the source searches in its own order.
+  bool get _sortShown =>
+      widget.query.search.isEmpty || widget.source.sortsWhileSearching;
+
   Widget _header(BuildContext context) {
     final TextStyle? style = Theme.of(context).textTheme.labelMedium;
     final bool allSelected =
@@ -366,10 +370,10 @@ class _DataTableKitState<T> extends State<DataTableKit<T>> {
                 label: column.label,
                 style: style,
                 numeric: column.numeric,
-                sorted: widget.query.sortBy == column.id
+                sorted: _sortShown && widget.query.sortBy == column.id
                     ? (widget.query.descending ? -1 : 1)
                     : 0,
-                onTap: column.sortable
+                onTap: column.sortable && _sortShown
                     ? () => widget.onQueryChanged(
                         widget.query.toggleSort(column.id),
                       )

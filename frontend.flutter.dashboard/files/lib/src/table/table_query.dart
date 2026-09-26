@@ -89,10 +89,17 @@ class TablePage<T> {
   final Object? nextCursor;
 }
 
-/// Where a table's rows come from. Implemented once per collection.
-abstract interface class PageSource<T> {
+/// Where a table's rows come from. Extended once per collection.
+abstract class PageSource<T> {
+  const PageSource();
+
   /// The page after [cursor] (the first page when null) for [query].
   ///
   /// Throws an `AppFailure` for anything the table should explain.
   Future<TablePage<T>> fetch(TableQuery query, {Object? cursor});
+
+  /// Whether a sort still applies while searching. False for a source that
+  /// can only return search results in its own order: the table then hides
+  /// the sort arrow rather than claim an order the rows are not in.
+  bool get sortsWhileSearching => true;
 }

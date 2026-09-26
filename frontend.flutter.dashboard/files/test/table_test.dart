@@ -8,7 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// A source the test answers by hand, so ordering and failure are controlled.
-class _Source implements PageSource<String> {
+class _Source extends PageSource<String> {
+  _Source({this.sortsWhileSearching = true});
+
+  @override
+  final bool sortsWhileSearching;
+
   final List<
     ({TableQuery query, Object? cursor, Completer<TablePage<String>> reply})
   >
@@ -258,5 +263,34 @@ void main() {
         expect(find.text('2 selected'), findsNothing);
       },
     );
+    testWidgets('a source that cannot sort while searching shows no sort arrow',
+        (WidgetTester t) async {
+      source = _Source(sortsWhileSearching: false);
+      query = const TableQuery(sortBy: 'name', search: 'an');
+      await t.pumpWidget(table());
+      source.calls.single.reply.complete(TablePage<String>(items: _rows('an', 2)));
+      await t.pumpAndSettle();
+      expect(find.byIcon(Icons.arrow_upward), findsNothing);
+      await t.tap(find.text('Name'));
+      await t.pump();
+      expect(source.calls, hasLength(1), reason: 'sorting is off while searching');
+    });
+
+    testWidgets('fits a phone, with bulk actions folded into a menu',
+        (WidgetTester t) async {
+      // The view, not just the surface: layout decisions read MediaQuery.
+      t.view
+        ..physicalSize = const Size(390, 800)
+        ..devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(table(bulk: true));
+      source.calls.single.reply.complete(TablePage<String>(items: _rows('r', 3)));
+      await t.pumpAndSettle();
+      await t.tap(find.byType(Checkbox).at(1));
+      await t.pumpAndSettle();
+      expect(find.byTooltip('Actions'), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, 'Archive'), findsNothing);
+      expect(t.takeException(), isNull, reason: 'no layout overflow');
+    });
   });
 }

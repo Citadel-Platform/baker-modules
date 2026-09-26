@@ -57,6 +57,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.accent,
     required this.accentText,
     required this.accentSoft,
+    required this.onAccent,
     required this.success,
     required this.warning,
     required this.danger,
@@ -77,6 +78,9 @@ class AppColors extends ThemeExtension<AppColors> {
   /// 4.5:1) on every surface. [accent] as 12px type is not.
   final Color accentText;
   final Color accentSoft;
+
+  /// Text and icons on an [accent] fill, such as a filled button's label.
+  final Color onAccent;
   final Color success;
   final Color warning;
   final Color danger;
@@ -92,6 +96,7 @@ class AppColors extends ThemeExtension<AppColors> {
     accent: Color(0xFF4A8B8F),
     accentText: Color(0xFF74C9CE),
     accentSoft: Color(0xFF1B3336),
+    onAccent: Color(0xFF0B121C),
     success: Color(0xFF5FA87A),
     warning: Color(0xFFD39C4C),
     danger: Color(0xFFDC8585),
@@ -108,6 +113,7 @@ class AppColors extends ThemeExtension<AppColors> {
     accent: Color(0xFF3B7B7F),
     accentText: Color(0xFF2B6468),
     accentSoft: Color(0xFFE1F0F0),
+    onAccent: Color(0xFFFFFFFF),
     success: Color(0xFF2F7A4B),
     warning: Color(0xFF8A5A12),
     danger: Color(0xFFB03A3A),
@@ -134,6 +140,7 @@ class AppColors extends ThemeExtension<AppColors> {
       accent: mix(accent, other.accent),
       accentText: mix(accentText, other.accentText),
       accentSoft: mix(accentSoft, other.accentSoft),
+      onAccent: mix(onAccent, other.onAccent),
       success: mix(success, other.success),
       warning: mix(warning, other.warning),
       danger: mix(danger, other.danger),

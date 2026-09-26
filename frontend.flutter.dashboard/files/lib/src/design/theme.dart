@@ -16,6 +16,7 @@ ThemeData appTheme(Brightness brightness) {
         brightness: brightness,
       ).copyWith(
         primary: c.accent,
+        onPrimary: c.onAccent,
         surface: c.surface,
         surfaceContainerLow: c.background,
         surfaceContainerHigh: c.surfaceRaised,

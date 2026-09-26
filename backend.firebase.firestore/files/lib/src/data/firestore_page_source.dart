@@ -15,7 +15,7 @@ import 'firestore_failures.dart';
 ///   copy of whatever is searched (Firestore has no full-text search). While
 ///   searching, results are in that field's order: Firestore requires the
 ///   first sort to be the field compared.
-class FirestorePageSource<T> implements PageSource<T> {
+class FirestorePageSource<T> extends PageSource<T> {
   FirestorePageSource({
     required this.query,
     required this.sortFields,
@@ -40,6 +40,11 @@ class FirestorePageSource<T> implements PageSource<T> {
   /// Filter name to field path, compared for equality.
   final Map<String, String> filterFields;
   final String? searchField;
+
+  /// Search results come back in [searchField]'s order: Firestore requires
+  /// a range query's first sort to be the field it compares.
+  @override
+  bool get sortsWhileSearching => searchField == null;
 
   /// The sortable and filterable names, for `TableQueryRoute.of`.
   Set<String> get sortable => sortFields.keys.toSet();

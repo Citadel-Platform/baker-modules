@@ -2,6 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../firebase_options.dart';
+import 'stored_session_stub.dart'
+    if (dart.library.js_interop) 'stored_session_web.dart';
 
 /// Whether to talk to the local Firebase emulators instead of the project.
 ///
@@ -31,5 +33,20 @@ Future<FirebaseApp?> startFirebase() async {
     debugPrint('Firebase not configured: ${error.message}');
     return null;
   }
+  if (useFirebaseEmulators && kIsWeb && !_pluginReconnectsEmulator) {
+    // On the web, FlutterFire starts Auth inside initializeApp and restores
+    // the stored session there, a network call made before this app can
+    // connect the emulator. The call goes to production, and the emulator
+    // connection made afterwards is refused silently. Forgetting the stored
+    // session means nothing is sent before the emulator is connected. A
+    // reload signs you out in this mode, which costs an emulator account
+    // nothing.
+    await forgetStoredFirebaseSession();
+  }
   return Firebase.initializeApp(options: options);
 }
+
+/// FlutterFire reconnects the emulator itself, before restoring the session,
+/// only on `localhost` in a debug build.
+bool get _pluginReconnectsEmulator =>
+    Uri.base.host == 'localhost' && kDebugMode;
