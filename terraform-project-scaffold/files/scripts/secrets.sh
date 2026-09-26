@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sets and retires the values of the web server's secrets.
+# Sets and retires the values of the application's secrets.
 #
 #   scripts/secrets.sh list                    the secrets, and their versions
 #   scripts/secrets.sh set NAME                reads the value from standard input
@@ -9,12 +9,12 @@
 #   printf '%s' "$VALUE" | scripts/secrets.sh set STRIPE_KEY
 #   scripts/secrets.sh set STRIPE_KEY < key.txt
 #
-# NAME is an environment variable name listed in web_secrets (infra); a secret
+# NAME is an environment variable name listed in app_secrets (infra/variables.tf); a secret
 # that is not listed there does not exist, and is refused. Terraform creates
 # the secret; this only adds and retires its values, which never pass through
 # Terraform's state, a command line or shell history.
 #
-# The server reads "latest" when an instance starts. After `set`, deploy (or
+# Services read "latest" when an instance starts. After `set`, deploy (or
 # wait for new instances) for it to be used. Disable an old version once the
 # new one is serving; destroy only when it can never be needed again.
 set -euo pipefail
@@ -29,18 +29,18 @@ project="$(out project_id)"
 gc() { gcloud --project "$project" "$@"; }
 
 secret_id() {
-  terraform -chdir=infra output -json web_secret_ids | python3 -c "
+  terraform -chdir=infra output -json app_secret_ids | python3 -c "
 import json, sys
 ids = json.load(sys.stdin)
 name = sys.argv[1]
 if name not in ids:
-    sys.exit('No secret ' + repr(name) + '. Declared: ' + (', '.join(sorted(ids)) or 'none') + '. Add it to web_secrets and apply.')
+    sys.exit('No secret ' + repr(name) + '. Declared: ' + (', '.join(sorted(ids)) or 'none') + '. Add it to app_secrets and apply.')
 print(ids[name])" "$1"
 }
 
 case "$command" in
   list)
-    terraform -chdir=infra output -json web_secret_ids | python3 -c "
+    terraform -chdir=infra output -json app_secret_ids | python3 -c "
 import json, sys
 for name, sid in sorted(json.load(sys.stdin).items()):
     print(name, sid)" | while read -r n id; do

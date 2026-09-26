@@ -1,8 +1,8 @@
 # The web app on Cloud Run, behind Firebase Hosting.
 #
-# Terraform owns the service, its registry and its secrets; the deploy script
-# only rolls out new images. That split is why the image below is ignored
-# after creation: the running revision is the script's to change, and a plan
+# Terraform owns the service and its registry, and names the application
+# secrets it reads (the scaffold owns those); the deploy script only rolls out
+# new images. That split is why the image below is ignored after creation: the running revision is the script's to change, and a plan
 # that tried to put the placeholder back would be a plan to take the site down.
 
 locals {
@@ -15,13 +15,8 @@ locals {
 }
 
 resource "google_project_service" "web" {
-  for_each = toset([
-    "secretmanager.googleapis.com",
-    "firebasehosting.googleapis.com",
-  ])
-
   project            = var.project_id
-  service            = each.value
+  service            = "firebasehosting.googleapis.com"
   disable_on_destroy = false
 }
 
@@ -43,33 +38,6 @@ resource "google_artifact_registry_repository" "web" {
   }
 
   depends_on = [google_project_service.required]
-}
-
-# One secret per name in var.web_secrets. Terraform creates the secret, never
-# its value: a value in Terraform is a value in the state file. Values are
-# added with scripts/secrets.sh, which reads them from standard input.
-resource "google_secret_manager_secret" "web" {
-  for_each = toset(var.web_secrets)
-
-  project   = var.project_id
-  secret_id = "${local.web_name}-${lower(replace(each.value, "_", "-"))}"
-  labels    = local.web_labels
-
-  replication {
-    auto {}
-  }
-
-  depends_on = [google_project_service.web]
-}
-
-# Only the application's own identity may read them.
-resource "google_secret_manager_secret_iam_member" "web" {
-  for_each = google_secret_manager_secret.web
-
-  project   = var.project_id
-  secret_id = each.value.secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.application.email}"
 }
 
 resource "google_cloud_run_v2_service" "web" {
@@ -114,13 +82,15 @@ resource "google_cloud_run_v2_service" "web" {
         failure_threshold = 10
       }
 
+      # The application secrets this service reads, as environment
+      # variables. Declared in app_secrets (the scaffold); named here.
       dynamic "env" {
-        for_each = google_secret_manager_secret.web
+        for_each = toset(var.web_secret_env)
         content {
-          name = env.key
+          name = env.value
           value_source {
             secret_key_ref {
-              secret  = env.value.secret_id
+              secret  = google_secret_manager_secret.app[env.value].secret_id
               version = "latest"
             }
           }
@@ -130,6 +100,10 @@ resource "google_cloud_run_v2_service" "web" {
   }
 
   lifecycle {
+    precondition {
+      condition     = alltrue([for s in var.web_secret_env : contains(var.app_secrets, s)])
+      error_message = "Every web_secret_env name must be declared in app_secrets."
+    }
     ignore_changes = [
       template[0].containers[0].image,
       client,
@@ -137,7 +111,7 @@ resource "google_cloud_run_v2_service" "web" {
     ]
   }
 
-  depends_on = [google_secret_manager_secret_iam_member.web]
+  depends_on = [google_secret_manager_secret_iam_member.app]
 }
 
 # Anyone may call the service: it is a public website, and Firebase Hosting's
@@ -157,16 +131,4 @@ output "web_service" {
 
 output "web_repository" {
   value = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.web.repository_id}"
-}
-
-output "web_secret_ids" {
-  value = { for k, s in google_secret_manager_secret.web : k => s.secret_id }
-}
-
-output "project_id" {
-  value = var.project_id
-}
-
-output "region" {
-  value = var.region
 }

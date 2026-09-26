@@ -8,9 +8,10 @@ analyzer:
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
-    # A separate Dart package with its own pubspec (the Cloud Run web server),
-    # analysed in its own directory.
+    # Separate Dart packages with their own pubspecs (the Cloud Run web
+    # server, the API), each analysed in its own directory.
     - "server/**"
+    - "api/**"
 
 linter:
   rules:

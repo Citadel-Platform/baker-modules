@@ -1,0 +1,56 @@
+{
+  "displayName": "Dart API on Cloud Run",
+  "layer": "backend",
+  "product": "Google Cloud",
+  "version": "1.0.0",
+  "summary": "The application's API: a shelf pipeline that verifies Firebase ID tokens (and Google OIDC for Cloud Tasks and Scheduler) to Firebase's documented rules, checks revocation where data changes, refuses every route by default, answers errors as RFC 9457 problems, caps bodies on the stream, allows only listed browser origins, and makes retried writes act once. Terraform, a scratch image, and the shared rollout.",
+  "requires": [
+    "terraform-project-scaffold"
+  ],
+  "inputs": {
+    "firebaseProjectId": {
+      "label": "Firebase project ID",
+      "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$",
+      "help": "The Google Cloud / Firebase project this application uses, e.g. acme-crm-prod. It must already exist with Firebase enabled."
+    },
+    "region": {
+      "label": "Region",
+      "pattern": "^[a-z]+-[a-z]+[0-9]$",
+      "help": "The Google Cloud region the application runs in, e.g. asia-southeast1 for Singapore."
+    },
+    "namePrefix": {
+      "label": "Resource name prefix",
+      "pattern": "^[a-z][a-z0-9-]{1,20}$",
+      "help": "Short, lower case, e.g. acme. Prefixes every resource, so two applications in one project do not collide."
+    },
+    "appTitle": {
+      "label": "Application title",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9 &.-]{0,59}$",
+      "help": "Shown in the browser tab and the task switcher, e.g. Acme CRM."
+    }
+  },
+  "merge": {
+    "firebase.json": {
+      "emulators": {
+        "auth": {
+          "port": 9099
+        },
+        "firestore": {
+          "port": 8080
+        },
+        "singleProjectMode": true
+      }
+    },
+    ".firebaserc": {
+      "projects": {
+        "default": "{{baker.firebaseProjectId}}"
+      }
+    }
+  },
+  "nextSteps": [
+    "cd api && dart pub get && dart analyze && dart test",
+    "firebase emulators:exec --only auth,firestore --project demo-local \"cd api && dart test test_emulator\"",
+    "cd infra && terraform init && terraform apply",
+    "scripts/deploy_api.sh deploy"
+  ]
+}

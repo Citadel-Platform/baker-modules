@@ -2,8 +2,8 @@
   "displayName": "Terraform project scaffold",
   "layer": "backend",
   "product": "Terraform",
-  "version": "4.2.0",
-  "summary": "The client's own project as far as their application needs it: enabled services and the identity it runs as.",
+  "version": "5.0.0",
+  "summary": "The client's own project as far as their application needs it: enabled services, the identity it runs as, its secrets (values set from standard input, never in Terraform), and the rollout every Cloud Run service shares.",
   "inputs": {
     "firebaseProjectId": {
       "label": "Firebase project ID",
@@ -22,6 +22,7 @@
     }
   },
   "nextSteps": [
-    "cd infra && terraform init && terraform validate && terraform plan"
+    "cd infra && terraform init && terraform validate && terraform plan",
+    "printf %s \"$VALUE\" | scripts/secrets.sh set NAME"
   ]
 }

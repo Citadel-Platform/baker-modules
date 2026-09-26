@@ -1,0 +1,60 @@
+# The API's contract. Kept beside the routes and checked against them by
+# test/openapi_test.dart: a route missing here, or described here and not
+# served, fails the tests.
+openapi: 3.1.0
+info:
+  title: "{{baker.appTitle}} API"
+  version: "1"
+servers:
+  - url: /
+components:
+  securitySchemes:
+    firebase:
+      type: http
+      scheme: bearer
+      bearerFormat: Firebase ID token
+  schemas:
+    Problem:
+      type: object
+      description: RFC 9457 problem details; every error has this shape.
+      required: [type, status, code, title]
+      properties:
+        type: {type: string}
+        status: {type: integer}
+        code: {type: string, description: Stable, for programs.}
+        title: {type: string}
+        detail: {type: string}
+        requestId: {type: string, description: Quote it when reporting a problem.}
+        fields:
+          type: object
+          additionalProperties: {type: string}
+  responses:
+    Problem:
+      description: A refusal or failure.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+paths:
+  /healthz:
+    get:
+      summary: Liveness, for Cloud Run.
+      security: []
+      responses:
+        "200": {description: ok}
+  /v1/me:
+    get:
+      summary: Who the caller is, and their roles.
+      security: [{firebase: []}]
+      responses:
+        "200":
+          description: The caller.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [uid, roles]
+                properties:
+                  uid: {type: string}
+                  email: {type: [string, "null"]}
+                  roles: {type: array, items: {type: string}}
+        default: {$ref: '#/components/responses/Problem'}

@@ -9,13 +9,8 @@ variable "web_max_instances" {
   }
 }
 
-variable "web_secrets" {
+variable "web_secret_env" {
   type        = list(string)
   default     = []
-  description = "Environment variables the server reads from Secret Manager, e.g. [\"STRIPE_KEY\"]. Values are set with scripts/secrets.sh."
-
-  validation {
-    condition     = alltrue([for s in var.web_secrets : can(regex("^[A-Z][A-Z0-9_]{0,40}$", s))])
-    error_message = "Each web_secrets entry must be an upper-case environment variable name."
-  }
+  description = "Which of app_secrets the web server reads, as environment variables."
 }

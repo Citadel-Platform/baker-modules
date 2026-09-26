@@ -23,3 +23,14 @@ variable "name_prefix" {
     error_message = "name_prefix must be lowercase and at most 21 characters."
   }
 }
+
+variable "app_secrets" {
+  type        = list(string)
+  default     = []
+  description = "Secrets the application's services may read, as environment variable names, e.g. [\"RESEND_API_KEY\"]. Values are set with scripts/secrets.sh."
+
+  validation {
+    condition     = alltrue([for s in var.app_secrets : can(regex("^[A-Z][A-Z0-9_]{0,40}$", s))])
+    error_message = "Each app_secrets entry must be an upper-case environment variable name."
+  }
+}
