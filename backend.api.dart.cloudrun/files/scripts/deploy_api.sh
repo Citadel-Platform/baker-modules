@@ -9,6 +9,14 @@ cd "$(dirname "$0")/.."
 
 case "${1:-}" in
   deploy)
+    # Tasks call the API at the address Terraform computed; if Cloud Run gave
+    # the service another, every queued task would fail. Checked, not assumed.
+    actual="$(terraform -chdir=infra output -raw api_url)"
+    expected="$(terraform -chdir=infra output -raw api_url_deterministic)"
+    if [[ "$actual" != "$expected" ]]; then
+      echo "The API is at $actual, but tasks are told $expected. Fix api_url in infra/api.tf first." >&2
+      exit 1
+    fi
     (cd api && dart pub get && dart analyze && dart test)
     exec scripts/cloudrun_rollout.sh deploy api_service api_repository api api
     ;;

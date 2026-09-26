@@ -1,0 +1,49 @@
+# Mail's routes; test/openapi_test.dart reads this with openapi.yaml.
+paths:
+  /internal/mail/send:
+    post:
+      summary: Sends one queued message. Called by Cloud Tasks with an OIDC token.
+      security: [{google: []}]
+      responses:
+        "200": {description: The message's state after the attempt.}
+        "503": {description: Worth retrying; Cloud Tasks will.}
+  /internal/mail/sweep:
+    post:
+      summary: Dispatches stranded messages and removes old bodies. Called by Cloud Scheduler.
+      security: [{google: []}]
+      responses:
+        "200": {description: What the sweep did.}
+  /webhooks/mail:
+    post:
+      summary: Delivery events from Resend, signed with Svix.
+      security: []
+      responses:
+        "204": {description: Accepted.}
+        "401": {description: Signature not accepted.}
+  /v1/mail/outbox:
+    get:
+      summary: Messages in one state (default failed), without their bodies.
+      security: [{firebase: []}]
+      parameters:
+        - {name: state, in: query, schema: {type: string, enum: [queued, sent, delivered, bounced, complained, suppressed, failed]}}
+      responses:
+        "200": {description: The messages.}
+  /v1/mail/outbox/{id}/retry:
+    post:
+      summary: Queues a failed message again.
+      security: [{firebase: []}]
+      responses:
+        "202": {description: Queued.}
+        "409": {description: Not a failed message.}
+  /v1/mail/suppressions:
+    get:
+      summary: Addresses mail is no longer sent to, and why.
+      security: [{firebase: []}]
+      responses:
+        "200": {description: The suppressions.}
+  /v1/mail/suppressions/{id}:
+    delete:
+      summary: Lifts a suppression.
+      security: [{firebase: []}]
+      responses:
+        "204": {description: Lifted.}

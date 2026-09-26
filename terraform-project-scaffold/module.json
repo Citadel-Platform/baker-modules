@@ -24,5 +24,10 @@
   "nextSteps": [
     "cd infra && terraform init && terraform validate && terraform plan",
     "printf %s \"$VALUE\" | scripts/secrets.sh set NAME"
-  ]
+  ],
+  "merge": {
+    "infra/app.auto.tfvars.json": {
+      "app_secrets": {}
+    }
+  }
 }

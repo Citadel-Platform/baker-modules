@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:api/api.dart';
 import 'package:api/routes/app_routes.dart';
+import 'package:googleapis/cloudtasks/v2.dart' as ct;
+import 'package:googleapis/firestore/v1.dart' as fs;
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:http/http.dart' as http;
 import 'package:shelf/shelf_io.dart' as io;
@@ -14,6 +16,8 @@ import 'package:shelf/shelf_io.dart' as io;
 ///   FIRESTORE_DATABASE    for idempotency records; `(default)` if unset
 ///   OIDC_AUDIENCE         what Cloud Tasks and Scheduler put in `aud`
 ///   INTERNAL_CALLER       the service account they call as
+///   TASKS_QUEUE           the work queue, projects/P/locations/L/queues/Q
+///   API_URL               this service's own address, which tasks call
 ///
 /// With FIREBASE_AUTH_EMULATOR_HOST and FIRESTORE_EMULATOR_HOST set it runs
 /// against the emulators, and refuses to start that way on Cloud Run.
@@ -70,7 +74,26 @@ Future<void> main() async {
   final HttpServer server = await io.serve(
     buildApi(
       routes: appRoutes(
-        AppContext(internalCaller: env['INTERNAL_CALLER'] ?? ''),
+        AppContext(
+          internalCaller: env['INTERNAL_CALLER'] ?? '',
+          firestore: AppFirestore(
+            storeEmulator == null
+                ? fs.FirestoreApi(google)
+                : fs.FirestoreApi(google, rootUrl: 'http://$storeEmulator/'),
+            projectId: project,
+            database: env['FIRESTORE_DATABASE'] ?? '(default)',
+          ),
+          tasks: env['TASKS_QUEUE'] == null
+              ? null
+              : CloudTasksQueue(
+                  ct.CloudTasksApi(google),
+                  queue: env['TASKS_QUEUE']!,
+                  apiUrl: _required(env, 'API_URL'),
+                  caller: _required(env, 'INTERNAL_CALLER'),
+                  audience: _required(env, 'OIDC_AUDIENCE'),
+                ),
+          environment: env,
+        ),
       ),
       services: services,
       config: ApiConfig(

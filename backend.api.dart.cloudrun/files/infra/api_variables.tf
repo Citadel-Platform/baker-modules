@@ -20,8 +20,22 @@ variable "api_allowed_origins" {
   }
 }
 
-variable "api_secret_env" {
-  type        = list(string)
-  default     = []
-  description = "Which of app_secrets the API reads, as environment variables."
+variable "api_env" {
+  type        = map(string)
+  default     = {}
+  description = "Plain (not secret) environment variables for the API. Modules add theirs in app.auto.tfvars.json."
+
+  validation {
+    condition = alltrue([
+      for k in keys(var.api_env) :
+      !contains(["FIREBASE_PROJECT_ID", "ALLOWED_ORIGINS", "OIDC_AUDIENCE", "INTERNAL_CALLER", "TASKS_QUEUE", "API_URL", "PORT"], k)
+    ])
+    error_message = "api_env cannot override a variable the API's Terraform sets itself."
+  }
+}
+
+variable "api_env_secrets" {
+  type        = map(string)
+  default     = {}
+  description = "Environment variables the API reads from application secrets: variable name to app_secrets name. Modules add theirs in app.auto.tfvars.json."
 }

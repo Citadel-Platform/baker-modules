@@ -1,0 +1,56 @@
+{
+  "displayName": "Transactional mail",
+  "layer": "backend",
+  "product": "Resend",
+  "version": "1.0.0",
+  "summary": "Mail from the API through an outbox: the message commits with the change that caused it, a named Cloud Task sends it once (the message id is Resend's idempotency key), a sweep catches stranded messages and purges bodies after retention, signed delivery events move messages forward only, and bounces and complaints suppress the address. Admin routes list failures and suppressions, retry, and lift.",
+  "requires": [
+    "backend.api.dart.cloudrun"
+  ],
+  "inputs": {
+    "namePrefix": {
+      "label": "Resource name prefix",
+      "pattern": "^[a-z][a-z0-9-]{1,20}$",
+      "help": "Short, lower case, e.g. acme. Prefixes every resource, so two applications in one project do not collide."
+    },
+    "mailFrom": {
+      "label": "Sender",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9 &.-]{0,59} <[^@\\s<>\"]+@[^@\\s<>\"]+\\.[^@\\s<>\"]+>$",
+      "help": "Name and address mail is sent from, on a domain verified at Resend, e.g. Acme <no-reply@mail.acme.com>."
+    }
+  },
+  "insert": {
+    "api/lib/routes/app_routes.dart": {
+      "imports": [
+        "import '../mail/mail_routes.dart';"
+      ],
+      "routes": [
+        "...mailRoutes(context),"
+      ]
+    }
+  },
+  "merge": {
+    "infra/app.auto.tfvars.json": {
+      "app_secrets": {
+        "RESEND_API_KEY": "Resend sending-only API key",
+        "MAIL_WEBHOOK_SECRET": "Resend webhook signing secret (whsec_…)"
+      },
+      "api_env_secrets": {
+        "RESEND_API_KEY": "RESEND_API_KEY",
+        "MAIL_WEBHOOK_SECRET": "MAIL_WEBHOOK_SECRET"
+      },
+      "api_env": {
+        "MAIL_FROM": "{{baker.mailFrom}}",
+        "MAIL_RETENTION_DAYS": "30"
+      }
+    }
+  },
+  "nextSteps": [
+    "Resend: verify the sending domain, and create a sending-only API key",
+    "cd infra && terraform apply",
+    "printf %s \"$RESEND_KEY\" | scripts/secrets.sh set RESEND_API_KEY",
+    "Resend: add a webhook to the mail_webhook_url output for email.delivered, email.bounced, email.complained and email.suppressed",
+    "printf %s \"$WHSEC\" | scripts/secrets.sh set MAIL_WEBHOOK_SECRET",
+    "scripts/deploy_api.sh deploy"
+  ]
+}

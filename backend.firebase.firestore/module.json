@@ -49,7 +49,16 @@
   },
   "nextSteps": [
     "firebase emulators:exec --only firestore --project demo-local \"flutter test test_emulator/firestore\"",
-    "In lib/src/configure.dart: import 'data/firestore_setup.dart'; and add ...await firestoreOverrides() after the sign-in overrides",
     "firebase deploy --only firestore:rules,firestore:indexes --project {{baker.firebaseProjectId}}"
-  ]
+  ],
+  "insert": {
+    "lib/src/configure.dart": {
+      "imports": [
+        "import 'data/firestore_setup.dart';"
+      ],
+      "overrides": [
+        "...await firestoreOverrides(),"
+      ]
+    }
+  }
 }

@@ -60,7 +60,7 @@ route's security differs between the two.
 startup probe, `deletion_protection`), `roles/datastore.user` and
 `roles/firebaseauth.viewer` for the application's identity and nothing wider,
 a separate `internal` service account for Cloud Tasks and Scheduler, the TTL
-policy, the application secrets named in `api_secret_env`. The image is
+policy, plain settings in `api_env` and application secrets in `api_env_secrets`, both maps other modules add to through `infra/app.auto.tfvars.json`. The image is
 compiled ahead of time and runs `FROM scratch` as uid 65532 (12.8 MB), with
 the CA certificates it needs to call Google. `scripts/deploy_api.sh` runs the
 tests, then the scaffold's shared rollout.

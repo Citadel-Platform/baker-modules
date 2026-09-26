@@ -1,6 +1,6 @@
 {
   "displayName": "CRM or internal tool — on Cloud Run, with the client's project in Terraform",
-  "summary": "The dashboard served from Cloud Run behind Firebase Hosting, with the application's own API beside it, and the client's project, services, registries and secrets in Terraform. For an application that needs server-side logic or secrets.",
+  "summary": "The dashboard served from Cloud Run behind Firebase Hosting, with the application's own API and transactional mail beside it, and the client's project, services, registries and secrets in Terraform. For an application that needs server-side logic, secrets or mail.",
   "stack": "flutter-firebase",
   "modules": [
     "frontend.flutter.dashboard",
@@ -9,6 +9,7 @@
     "terraform-project-scaffold",
     "deploy.gcp.cloudrun.frontend.flutter",
     "backend.api.dart.cloudrun",
+    "backend.mail.transactional",
     "platform-api-client",
     "conduit-instrumentation",
     "agent-context-pack"

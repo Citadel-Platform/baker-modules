@@ -85,9 +85,9 @@ resource "google_cloud_run_v2_service" "web" {
       # The application secrets this service reads, as environment
       # variables. Declared in app_secrets (the scaffold); named here.
       dynamic "env" {
-        for_each = toset(var.web_secret_env)
+        for_each = var.web_env_secrets
         content {
-          name = env.value
+          name = env.key
           value_source {
             secret_key_ref {
               secret  = google_secret_manager_secret.app[env.value].secret_id
@@ -101,8 +101,8 @@ resource "google_cloud_run_v2_service" "web" {
 
   lifecycle {
     precondition {
-      condition     = alltrue([for s in var.web_secret_env : contains(var.app_secrets, s)])
-      error_message = "Every web_secret_env name must be declared in app_secrets."
+      condition     = alltrue([for s in values(var.web_env_secrets) : contains(keys(var.app_secrets), s)])
+      error_message = "Every secret in web_env_secrets must be declared in app_secrets."
     }
     ignore_changes = [
       template[0].containers[0].image,

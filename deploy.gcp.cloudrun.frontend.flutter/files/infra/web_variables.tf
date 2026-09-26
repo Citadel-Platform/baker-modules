@@ -9,8 +9,8 @@ variable "web_max_instances" {
   }
 }
 
-variable "web_secret_env" {
-  type        = list(string)
-  default     = []
-  description = "Which of app_secrets the web server reads, as environment variables."
+variable "web_env_secrets" {
+  type        = map(string)
+  default     = {}
+  description = "Environment variables the web server reads from application secrets: variable name to app_secrets name."
 }

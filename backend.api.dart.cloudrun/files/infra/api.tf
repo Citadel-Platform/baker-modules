@@ -19,6 +19,66 @@ locals {
   # What Cloud Tasks and Scheduler put in their tokens' audience, and what the
   # API accepts. Any fixed string both sides agree on.
   api_oidc_audience = "${local.api_name}-internal"
+
+  # The service's own address, which tasks call back. Cloud Run's
+  # deterministic form, so it is known before the service exists and the
+  # service can be told it.
+  api_url = "https://${local.api_name}-${data.google_project.this.number}.${var.region}.run.app"
+}
+
+data "google_project" "this" {
+  project_id = var.project_id
+}
+
+resource "google_project_service" "api" {
+  for_each = toset([
+    "cloudtasks.googleapis.com",
+    "cloudscheduler.googleapis.com",
+    "identitytoolkit.googleapis.com",
+  ])
+
+  project            = var.project_id
+  service            = each.value
+  disable_on_destroy = false
+}
+
+# Work the API hands to itself: mail to send, records to sync. Retried with
+# backoff until the route answers 2xx, then dropped after the last attempt
+# (the feature's own sweep finds what was never finished).
+resource "google_cloud_tasks_queue" "work" {
+  project  = var.project_id
+  name     = "${local.api_name}-work"
+  location = var.region
+
+  rate_limits {
+    max_dispatches_per_second = 10
+    max_concurrent_dispatches = 20
+  }
+
+  retry_config {
+    max_attempts  = 10
+    min_backoff   = "10s"
+    max_backoff   = "3600s"
+    max_doublings = 6
+  }
+
+  depends_on = [google_project_service.api]
+}
+
+# The application queues tasks, and the tasks carry tokens for the internal
+# caller, which the application must be allowed to issue.
+resource "google_cloud_tasks_queue_iam_member" "work_enqueue" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_tasks_queue.work.name
+  role     = "roles/cloudtasks.enqueuer"
+  member   = "serviceAccount:${google_service_account.application.email}"
+}
+
+resource "google_service_account_iam_member" "act_as_internal" {
+  service_account_id = google_service_account.internal_caller.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.application.email}"
 }
 
 resource "google_artifact_registry_repository" "api" {
@@ -129,11 +189,28 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "INTERNAL_CALLER"
         value = google_service_account.internal_caller.email
       }
+      env {
+        name  = "TASKS_QUEUE"
+        value = google_cloud_tasks_queue.work.id
+      }
+      env {
+        name  = "API_URL"
+        value = local.api_url
+      }
+
+      # Plain settings other modules add (MAIL_FROM, …), then secrets.
+      dynamic "env" {
+        for_each = var.api_env
+        content {
+          name  = env.key
+          value = env.value
+        }
+      }
 
       dynamic "env" {
-        for_each = toset(var.api_secret_env)
+        for_each = var.api_env_secrets
         content {
-          name = env.value
+          name = env.key
           value_source {
             secret_key_ref {
               secret  = google_secret_manager_secret.app[env.value].secret_id
@@ -147,8 +224,8 @@ resource "google_cloud_run_v2_service" "api" {
 
   lifecycle {
     precondition {
-      condition     = alltrue([for s in var.api_secret_env : contains(var.app_secrets, s)])
-      error_message = "Every api_secret_env name must be declared in app_secrets."
+      condition     = alltrue([for s in values(var.api_env_secrets) : contains(keys(var.app_secrets), s)])
+      error_message = "Every secret in api_env_secrets must be declared in app_secrets."
     }
     ignore_changes = [
       template[0].containers[0].image,
@@ -160,6 +237,8 @@ resource "google_cloud_run_v2_service" "api" {
   depends_on = [
     google_secret_manager_secret_iam_member.app,
     google_project_iam_member.api,
+    google_cloud_tasks_queue_iam_member.work_enqueue,
+    google_service_account_iam_member.act_as_internal,
   ]
 }
 
@@ -179,6 +258,11 @@ output "api_service" {
 
 output "api_url" {
   value = google_cloud_run_v2_service.api.uri
+}
+
+output "api_url_deterministic" {
+  description = "The address tasks call. Should equal api_url; if not, tasks cannot reach the API."
+  value       = local.api_url
 }
 
 output "api_repository" {

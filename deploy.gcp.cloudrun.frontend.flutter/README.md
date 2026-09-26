@@ -20,17 +20,16 @@ simpler and cheaper; the two cannot share a recipe.
 - **`infra/web.tf`**, on the Terraform scaffold: an Artifact Registry
   repository keeping the last 20 images (what a rollback deploys), the Cloud
   Run service (scale to zero, a ceiling on instances, startup probe,
-  `deletion_protection`), public invocation for Hosting's rewrite, and one
-  Secret Manager secret per name in `web_secrets`, readable only by the
-  application's service account and passed to the server as environment
-  variables. Terraform never holds a secret's value. Every resource labelled.
+  `deletion_protection`), public invocation for Hosting's rewrite, and the
+  application secrets named in `web_env_secrets`, passed to the server as
+  environment variables (the secrets themselves are the scaffold's).
+  Terraform never holds a secret's value. Every resource labelled.
 - **`scripts/deploy_run.sh`**: from a clean, tested commit, builds for
   linux/amd64, pushes, starts a revision with **no traffic** at a tagged
   address, checks it serves with its headers, then moves traffic. `rollback`
   returns traffic to the previous revision; `status` shows them.
-- **`scripts/secrets.sh`**: `set` reads the value from standard input (never
-  a command-line argument); `disable` and `destroy` (confirmed) retire old
-  versions; `list`. Names not declared in Terraform are refused.
+- Secrets are set with the scaffold's `scripts/secrets.sh`, and the rollout
+  is the scaffold's `scripts/cloudrun_rollout.sh`, shared with the API.
 
 ## Tested
 

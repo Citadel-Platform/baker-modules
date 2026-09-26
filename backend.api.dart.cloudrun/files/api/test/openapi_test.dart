@@ -5,14 +5,12 @@ import 'package:api/routes/app_routes.dart';
 import 'package:test/test.dart';
 import 'package:yaml/yaml.dart';
 
-/// `openapi.yaml` and the route table describe the same API.
+/// `openapi.yaml` (and feature fragments beside it) and the route table
+/// describe the same API.
 void main() {
   test('every route is described, and nothing else is', () {
-    final YamlMap spec =
-        loadYaml(File('openapi.yaml').readAsStringSync()) as YamlMap;
     final Set<String> described = <String>{
-      for (final MapEntry<dynamic, dynamic> path
-          in (spec['paths'] as YamlMap).entries)
+      for (final MapEntry<dynamic, dynamic> path in _paths().entries)
         for (final dynamic method in (path.value as YamlMap).keys)
           '${'$method'.toUpperCase()} ${_openApiPath('${path.key}')}',
     };
@@ -37,9 +35,7 @@ void main() {
   });
 
   test('public routes say so, and only they do', () {
-    final YamlMap paths =
-        (loadYaml(File('openapi.yaml').readAsStringSync()) as YamlMap)['paths']
-            as YamlMap;
+    final Map<dynamic, dynamic> paths = _paths();
     for (final ApiRoute r in appRoutes(
       const AppContext(
         internalCaller: 'internal@example.iam.gserviceaccount.com',
@@ -60,6 +56,28 @@ void main() {
       );
     }
   });
+}
+
+/// Every path in `openapi.yaml` and in feature fragments beside it
+/// (`openapi.mail.yaml`): a feature module documents its own routes.
+Map<dynamic, dynamic> _paths() {
+  final Map<dynamic, dynamic> all = <dynamic, dynamic>{};
+  for (final FileSystemEntity f in Directory('.').listSync()) {
+    final String name = f.uri.pathSegments.last;
+    if (f is! File || !RegExp(r'^openapi(\.[a-z_]+)?\.yaml$').hasMatch(name)) {
+      continue;
+    }
+    final YamlMap? paths =
+        (loadYaml(f.readAsStringSync()) as YamlMap)['paths'] as YamlMap?;
+    if (paths == null) continue;
+    for (final MapEntry<dynamic, dynamic> e in paths.entries) {
+      if (all.containsKey(e.key)) {
+        throw StateError('${e.key} is described twice');
+      }
+      all[e.key] = e.value;
+    }
+  }
+  return all;
 }
 
 /// `{id}` in OpenAPI is `<id>` in the route table.

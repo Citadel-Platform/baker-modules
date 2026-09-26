@@ -59,8 +59,17 @@
     "firebase emulators:exec --only auth --project demo-local \"flutter test test_emulator/auth\"",
     "dart pub global activate flutterfire_cli",
     "flutterfire configure --project={{baker.firebaseProjectId}} --platforms={{baker.platforms}} --yes --overwrite-firebase-options",
-    "In lib/src/configure.dart: import 'auth/auth_setup.dart'; and return <Override>[...await firebaseAuthOverrides()]",
     "Firebase console > Authentication: enable Google, and add the app's web address under Authorised domains",
     "dart run tool/set_roles.dart --project {{baker.firebaseProjectId}} --email <you> --roles admin --apply"
-  ]
+  ],
+  "insert": {
+    "lib/src/configure.dart": {
+      "imports": [
+        "import 'auth/auth_setup.dart';"
+      ],
+      "overrides": [
+        "...await firebaseAuthOverrides(),"
+      ]
+    }
+  }
 }

@@ -1,10 +1,14 @@
 import 'package:flutter_riverpod/misc.dart';
+// baker:imports
 
 /// Connects modules to the application, before the first frame.
 ///
-/// Each module that needs starting — a sign-in, a database — says in its next
-/// steps what to add here. The list is empty in a fresh build, and the
-/// screens then say "not connected" rather than pretending.
+/// Modules that need starting (a sign-in, a database) add themselves at the
+/// `baker:` lines when the application is bootstrapped. In a build with none,
+/// the list is empty and the screens say "not connected" rather than
+/// pretending.
 Future<List<Override>> configure() async {
-  return <Override>[];
+  return <Override>[
+    // baker:overrides
+  ];
 }
