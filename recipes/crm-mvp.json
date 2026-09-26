@@ -1,9 +1,11 @@
 {
-  "displayName": "CRM or internal tool \u2014 MVP shell",
-  "summary": "A running Flutter dashboard on CitadelDS v1, with role-gated routing, the data table kit and the platform and telemetry seams. No screens the client has not asked for, and no invented data.",
+  "displayName": "CRM or internal tool — MVP shell",
+  "summary": "A running Flutter dashboard on CitadelDS v1 with Firebase sign-in, role claims and Firestore behind deny-by-default rules, the data table kit, and the platform and telemetry seams. No screens the client has not asked for, and no invented data.",
   "stack": "flutter-firebase",
   "modules": [
     "frontend.flutter.dashboard",
+    "backend.firebase.auth",
+    "backend.firebase.firestore",
     "platform-api-client",
     "conduit-instrumentation",
     "agent-context-pack"

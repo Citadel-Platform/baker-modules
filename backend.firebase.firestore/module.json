@@ -1,0 +1,50 @@
+{
+  "displayName": "Cloud Firestore",
+  "layer": "backend",
+  "product": "Firebase",
+  "version": "1.0.0",
+  "summary": "Firestore with deny-by-default rules and helpers for roles and server-clock audit stamps, emulator-tested; a cursor-paged table source; typed document reading that names a malformed record; exact money storage.",
+  "requires": [
+    "backend.firebase.auth"
+  ],
+  "inputs": {
+    "firebaseProjectId": {
+      "label": "Firebase project ID",
+      "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$",
+      "help": "The Google Cloud / Firebase project this application uses, e.g. acme-crm-prod. It must already exist with Firebase enabled."
+    }
+  },
+  "pubspec": {
+    "dependencies": {
+      "cloud_firestore": "^6.10.0"
+    },
+    "dev_dependencies": {
+      "fake_cloud_firestore": "^4.3.0",
+      "http": "^1.6.0"
+    }
+  },
+  "merge": {
+    "firebase.json": {
+      "firestore": {
+        "rules": "firestore.rules",
+        "indexes": "firestore.indexes.json"
+      },
+      "emulators": {
+        "firestore": {
+          "port": 8080
+        },
+        "singleProjectMode": true
+      }
+    },
+    ".firebaserc": {
+      "projects": {
+        "default": "{{baker.firebaseProjectId}}"
+      }
+    }
+  },
+  "nextSteps": [
+    "firebase emulators:exec --only firestore --project demo-local \"flutter test test_emulator/firestore\"",
+    "In lib/src/configure.dart: import 'data/firestore_setup.dart'; and add ...await firestoreOverrides() after the sign-in overrides",
+    "firebase deploy --only firestore:rules,firestore:indexes --project {{baker.firebaseProjectId}}"
+  ]
+}

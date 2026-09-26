@@ -1,0 +1,78 @@
+rules_version = '2';
+
+// Who may read and write what. The app's own screen guards keep honest users
+// on the right pages; these rules are what keep the data safe, because
+// anybody can run the app's code with changes.
+//
+// Everything is refused unless a rule below allows it. Add each collection
+// with its own rule, using the helpers, and a test in
+// test_emulator/firestore_rules_test.dart.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers ----
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Roles are the `roles` claim on the sign-in token, set only by a server
+    // (tool/set_roles.dart). Never read roles from a document the app can
+    // write: a person could grant themselves any role.
+    function hasRole(role) {
+      return signedIn()
+        && request.auth.token.roles is list
+        && role in request.auth.token.roles;
+    }
+
+    function hasAnyRole(roles) {
+      return signedIn()
+        && request.auth.token.roles is list
+        && request.auth.token.roles.hasAny(roles);
+    }
+
+    // The written document holds only these fields.
+    function onlyKeys(keys) {
+      return request.resource.data.keys().hasOnly(keys);
+    }
+
+    // An update leaves these fields as they were.
+    function unchanged(keys) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(keys);
+    }
+
+    // Who made a record and when, stamped by the server clock and the
+    // signed-in person: `stampCreate` / `stampUpdate` in lib/src/data/audit.dart.
+    function stampedCreate() {
+      return request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function stampedUpdate() {
+      return unchanged(['createdBy', 'createdAt'])
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // ---- collections ----
+    //
+    // For example, records staff may read and admins may change:
+    //
+    //   match /records/{id} {
+    //     allow read: if hasAnyRole(['staff', 'admin']);
+    //     allow create: if hasRole('admin') && stampedCreate()
+    //       && onlyKeys(['name', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy']);
+    //     allow update: if hasRole('admin') && stampedUpdate();
+    //     allow delete: if false;
+    //   }
+
+    // ---- end of collections ----
+
+    // Anything not matched above is refused.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

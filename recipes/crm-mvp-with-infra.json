@@ -1,9 +1,11 @@
 {
-  "displayName": "CRM or internal tool \u2014 MVP shell and project scaffold",
+  "displayName": "CRM or internal tool — MVP shell and project scaffold",
   "summary": "The dashboard, plus the Terraform for the client's own project. For a client whose application is deployed into a project of their own from the first day.",
   "stack": "flutter-firebase",
   "modules": [
     "frontend.flutter.dashboard",
+    "backend.firebase.auth",
+    "backend.firebase.firestore",
     "platform-api-client",
     "conduit-instrumentation",
     "terraform-project-scaffold",

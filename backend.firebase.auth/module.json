@@ -1,0 +1,60 @@
+{
+  "displayName": "Firebase Authentication",
+  "layer": "middleware",
+  "product": "Firebase",
+  "version": "1.0.0",
+  "summary": "Google sign-in through Firebase, sessions that follow the ID token, and roles as server-set custom claims, with a dry-run-first tool to set them. Sign-in errors read as sentences; an unconfigured build says so.",
+  "requires": [
+    "frontend.flutter.dashboard"
+  ],
+  "inputs": {
+    "firebaseProjectId": {
+      "label": "Firebase project ID",
+      "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$",
+      "help": "The Google Cloud / Firebase project this application uses, e.g. acme-crm-prod. It must already exist with Firebase enabled."
+    },
+    "platforms": {
+      "label": "Platforms",
+      "pattern": "^(web|web,ios,android)$",
+      "help": "web for a web-only dashboard, or web,ios,android to build the mobile apps too."
+    }
+  },
+  "pubspec": {
+    "dependencies": {
+      "firebase_core": "^4.15.0",
+      "firebase_auth": "^6.7.0"
+    },
+    "dev_dependencies": {
+      "firebase_auth_mocks": "^0.15.2",
+      "mock_exceptions": "^0.8.2",
+      "googleapis_auth": "^2.3.4",
+      "http": "^1.6.0"
+    }
+  },
+  "merge": {
+    "firebase.json": {
+      "emulators": {
+        "auth": {
+          "port": 9099
+        },
+        "ui": {
+          "enabled": true
+        },
+        "singleProjectMode": true
+      }
+    },
+    ".firebaserc": {
+      "projects": {
+        "default": "{{baker.firebaseProjectId}}"
+      }
+    }
+  },
+  "nextSteps": [
+    "firebase emulators:exec --only auth --project demo-local \"flutter test test_emulator/auth\"",
+    "dart pub global activate flutterfire_cli",
+    "flutterfire configure --project={{baker.firebaseProjectId}} --platforms={{baker.platforms}} --yes --overwrite-firebase-options",
+    "In lib/src/configure.dart: import 'auth/auth_setup.dart'; and return <Override>[...await firebaseAuthOverrides()]",
+    "Firebase console > Authentication: enable Google, and add the app's web address under Authorised domains",
+    "dart run tool/set_roles.dart --project {{baker.firebaseProjectId}} --email <you> --roles admin --apply"
+  ]
+}
