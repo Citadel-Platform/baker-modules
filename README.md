@@ -26,6 +26,39 @@ A directory containing `module.json`:
 
 `layer` is `frontend`, `middleware` or `backend`.
 
+Optional keys, for what a module cannot ship as a file of its own:
+
+```json
+{
+  "pubspec": {
+    "dependencies": { "cloud_firestore": "^6.1.2" },
+    "dev_dependencies": { "fake_cloud_firestore": "^4.2.0" }
+  },
+  "merge": {
+    "firebase.json": { "firestore": { "rules": "firestore.rules" } }
+  },
+  "inputs": {
+    "firebaseProjectId": {
+      "label": "Firebase project ID",
+      "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$",
+      "help": "The Firebase project this application deploys to."
+    }
+  },
+  "nextSteps": ["flutterfire configure --project={{baker.firebaseProjectId}}"],
+  "requires": ["backend.firebase.auth"]
+}
+```
+
+- `pubspec`: packages merged into the application's `pubspec.yaml`.
+- `merge`: objects deep-merged into shared `.json` files.
+- `inputs`: values asked of the operator; `{{baker.<name>}}` in any file,
+  merge or next step is replaced. Only that prefix is a placeholder.
+- `nextSteps`: printed after apply, never run.
+- `requires`: modules a recipe must list before this one. Checked, never
+  added for you.
+
+Two modules disagreeing about any of these is refused at plan time.
+
 The version is the module's own and is the one thing here a person types. The
 commit and the release date are not: `tool/index_baker_modules.dart` in
 `citadel_core/platform/server` reads them from git, because a version somebody

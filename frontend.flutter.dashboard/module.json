@@ -1,0 +1,31 @@
+{
+  "displayName": "Flutter dashboard",
+  "layer": "frontend",
+  "product": "Flutter",
+  "version": "1.0.0",
+  "summary": "A Flutter web or mobile dashboard: CitadelDS v1, routing with role-gated pages, responsive navigation, a data table kit and exact money. Every data surface has loading, empty, failed and not-configured states, and nothing is invented.",
+  "inputs": {
+    "packageName": {
+      "label": "Dart package name",
+      "pattern": "^[a-z][a-z0-9_]{1,40}$",
+      "help": "Lower case with underscores, e.g. acme_crm. It is the app's import name and cannot contain spaces."
+    },
+    "appTitle": {
+      "label": "Application title",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9 &.-]{0,59}$",
+      "help": "Shown in the browser tab and the task switcher, e.g. Acme CRM."
+    },
+    "platforms": {
+      "label": "Platforms",
+      "pattern": "^(web|web,ios,android)$",
+      "help": "web for a web-only dashboard, or web,ios,android to build the mobile apps too."
+    }
+  },
+  "nextSteps": [
+    "flutter create --platforms={{baker.platforms}} --project-name {{baker.packageName}} .",
+    "flutter pub get",
+    "dart run build_runner build --delete-conflicting-outputs",
+    "flutter analyze",
+    "flutter test"
+  ]
+}

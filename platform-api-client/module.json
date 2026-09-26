@@ -2,6 +2,9 @@
   "displayName": "Platform API client",
   "layer": "middleware",
   "product": "Dart",
-  "version": "2.4.0",
-  "summary": "The platform address as a compile-time value, failures that read as sentences, and an unset address as a first-class state."
+  "version": "3.0.0",
+  "summary": "The platform address as a compile-time value, and its failures as AppFailures that read as sentences; an unset address is a first-class state.",
+  "requires": [
+    "frontend.flutter.dashboard"
+  ]
 }
