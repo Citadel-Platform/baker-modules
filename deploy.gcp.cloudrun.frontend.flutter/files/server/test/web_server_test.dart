@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:shelf/shelf.dart';
@@ -14,8 +15,9 @@ void main() {
     File('${dir.path}/main.dart.js').writeAsStringSync('js');
     Directory('${dir.path}/assets').createSync();
     File('${dir.path}/assets/a.json').writeAsStringSync('{}');
-    File('${dir.parent.path}/secret-${dir.path.hashCode}.txt')
-        .writeAsStringSync('outside');
+    File(
+      '${dir.parent.path}/secret-${dir.path.hashCode}.txt',
+    ).writeAsStringSync('outside');
     handler = webServer(
       publicDir: dir,
       routes: (Request r) => r.url.path == 'api/ping'
@@ -50,14 +52,19 @@ void main() {
   test('nothing outside the build is reachable', () async {
     final Response r = await get('/../secret-${dir.path.hashCode}.txt');
     expect(await r.readAsString(), isNot('outside'));
-    final Response encoded = await get('/%2e%2e/secret-${dir.path.hashCode}.txt');
+    final Response encoded = await get(
+      '/%2e%2e/secret-${dir.path.hashCode}.txt',
+    );
     expect(await encoded.readAsString(), isNot('outside'));
   });
 
   test('server routes answer first, and only what they handle', () async {
     expect(await (await get('/api/ping')).readAsString(), 'pong');
-    expect((await get('/api/other')).statusCode, 200,
-        reason: 'unhandled paths are pages of the app');
+    expect(
+      (await get('/api/other')).statusCode,
+      200,
+      reason: 'unhandled paths are pages of the app',
+    );
   });
 
   test('only GET and HEAD reach the files', () async {
@@ -65,6 +72,33 @@ void main() {
     expect(r.statusCode, 405);
     expect(r.headers['allow'], 'GET, HEAD');
     expect((await get('/', method: 'HEAD')).statusCode, 200);
+  });
+
+  test('text is gzipped for clients that accept it, and only then', () async {
+    final String big = 'x' * 20000;
+    File('${dir.path}/main.dart.js').writeAsStringSync(big);
+    final Response zipped = await handler(
+      Request(
+        'GET',
+        Uri.parse('http://localhost/main.dart.js'),
+        headers: <String, String>{'accept-encoding': 'deflate, gzip;q=1.0'},
+      ),
+    );
+    expect(zipped.headers['content-encoding'], 'gzip');
+    expect(zipped.headers['vary'], 'Accept-Encoding');
+    expect(zipped.headers['content-length'], isNull);
+    expect(zipped.headers['x-content-type-options'], 'nosniff');
+    final List<int> bytes = await zipped.read().fold(
+      <int>[],
+      (List<int> a, List<int> b) => a..addAll(b),
+    );
+    expect(bytes.length, lessThan(big.length ~/ 10));
+    expect(utf8.decode(gzip.decode(bytes)), big);
+
+    final Response plain = await get('/main.dart.js');
+    expect(plain.headers['content-encoding'], isNull);
+    expect(compressible('image/png'), isFalse);
+    expect(compressible('application/wasm'), isTrue);
   });
 
   test('health', () async {

@@ -20,7 +20,6 @@ Future<void> main() async {
     InternetAddress.anyIPv4,
     port,
   );
-  server.autoCompress = true;
   stdout.writeln('{"severity":"INFO","message":"serving on $port"}');
 
   late final StreamSubscription<ProcessSignal> sigterm;

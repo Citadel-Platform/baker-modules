@@ -76,35 +76,83 @@ Handler webServer({required Directory publicDir, Handler? routes}) {
   return const Pipeline()
       .addMiddleware(_log())
       .addMiddleware(_headers())
+      .addMiddleware(_gzip())
       .addHandler((Request request) {
         if (request.url.path == 'healthz') return Response.ok('ok');
         return cascade(request);
       });
 }
 
-Middleware _headers() => (Handler inner) => (Request request) async {
-  final Response response = await inner(request);
-  return response.change(headers: securityHeaders);
-};
+/// Compresses text-like responses for clients that accept gzip.
+///
+/// Done here rather than by `HttpServer.autoCompress`, which skipped every
+/// static file: they carry a Content-Length, and the whole 2.4 MB
+/// `main.dart.js` went out uncompressed (found running the image).
+Middleware _gzip() =>
+    (Handler inner) => (Request request) async {
+      final Response response = await inner(request);
+      final String type = response.headers['content-type'] ?? '';
+      final bool accepts = (request.headers['accept-encoding'] ?? '')
+          .split(',')
+          .any((String e) => e.trim().split(';').first == 'gzip');
+      if (!accepts ||
+          request.method == 'HEAD' ||
+          response.statusCode != 200 ||
+          response.headers.containsKey('content-encoding') ||
+          !compressible(type)) {
+        return response;
+      }
+      return Response(
+        200,
+        body: response.read().transform(gzip.encoder),
+        headers: <String, Object>{
+          for (final MapEntry<String, List<String>> h
+              in response.headersAll.entries)
+            if (h.key != 'content-length') h.key: h.value,
+          'content-encoding': 'gzip',
+          'vary': 'Accept-Encoding',
+        },
+      );
+    };
+
+/// Types worth compressing: text, and the WebAssembly and JSON Flutter loads.
+bool compressible(String contentType) {
+  final String t = contentType.split(';').first.trim().toLowerCase();
+  return t.startsWith('text/') ||
+      t == 'application/javascript' ||
+      t == 'application/json' ||
+      t == 'application/wasm' ||
+      t == 'image/svg+xml' ||
+      t == 'application/manifest+json';
+}
+
+Middleware _headers() =>
+    (Handler inner) => (Request request) async {
+      final Response response = await inner(request);
+      return response.change(headers: securityHeaders);
+    };
 
 /// One JSON line per request, in Cloud Logging's structured format. Paths
 /// only: query strings can carry tokens.
-Middleware _log() => (Handler inner) => (Request request) async {
-  final Stopwatch watch = Stopwatch()..start();
-  final Response response = await inner(request);
-  stdout.writeln(
-    jsonEncode(<String, Object?>{
-      'severity': response.statusCode >= 500 ? 'ERROR' : 'INFO',
-      'httpRequest': <String, Object?>{
-        'requestMethod': request.method,
-        'requestUrl': '/${request.url.path}',
-        'status': response.statusCode,
-        'latency': '${watch.elapsedMicroseconds / 1e6}s',
-        'userAgent': request.headers['user-agent'],
-      },
-      'logging.googleapis.com/trace':
-          request.headers['x-cloud-trace-context']?.split('/').first,
-    }),
-  );
-  return response;
-};
+Middleware _log() =>
+    (Handler inner) => (Request request) async {
+      final Stopwatch watch = Stopwatch()..start();
+      final Response response = await inner(request);
+      stdout.writeln(
+        jsonEncode(<String, Object?>{
+          'severity': response.statusCode >= 500 ? 'ERROR' : 'INFO',
+          'httpRequest': <String, Object?>{
+            'requestMethod': request.method,
+            'requestUrl': '/${request.url.path}',
+            'status': response.statusCode,
+            'latency': '${watch.elapsedMicroseconds / 1e6}s',
+            'userAgent': request.headers['user-agent'],
+          },
+          'logging.googleapis.com/trace': request
+              .headers['x-cloud-trace-context']
+              ?.split('/')
+              .first,
+        }),
+      );
+      return response;
+    };
