@@ -8,6 +8,11 @@
     "frontend.flutter.dashboard"
   ],
   "inputs": {
+    "packageName": {
+      "label": "Dart package name",
+      "pattern": "^[a-z][a-z0-9_]{1,40}$",
+      "help": "Lower case with underscores, e.g. acme_crm. It is the app's import name and cannot contain spaces."
+    },
     "firebaseProjectId": {
       "label": "Firebase project ID",
       "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$",
