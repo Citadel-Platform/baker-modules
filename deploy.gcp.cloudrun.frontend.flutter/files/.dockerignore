@@ -1,0 +1,13 @@
+# Only source goes into the build: never local state, credentials or output.
+.git
+.dart_tool
+build
+**/.dart_tool
+**/build
+.firebase
+infra
+android
+ios
+*.iml
+.env
+.env.*

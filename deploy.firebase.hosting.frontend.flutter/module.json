@@ -1,0 +1,84 @@
+{
+  "displayName": "Firebase Hosting for the Flutter web app",
+  "layer": "backend",
+  "product": "Firebase",
+  "version": "1.0.0",
+  "summary": "Deploys the web build to Firebase Hosting: preview channel first, live after typing the project id, from a clean commit that analyzes and tests. Every path serves the app; security headers on every response; a report-only content security policy to enforce once clean.",
+  "requires": [
+    "frontend.flutter.dashboard"
+  ],
+  "inputs": {
+    "firebaseProjectId": {
+      "label": "Firebase project ID",
+      "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$",
+      "help": "The Google Cloud / Firebase project this application uses, e.g. acme-crm-prod. It must already exist with Firebase enabled."
+    }
+  },
+  "merge": {
+    "firebase.json": {
+      "hosting": {
+        "public": "build/web",
+        "ignore": [
+          "firebase.json",
+          "**/.*",
+          "**/node_modules/**"
+        ],
+        "rewrites": [
+          {
+            "source": "**",
+            "destination": "/index.html"
+          }
+        ],
+        "headers": [
+          {
+            "source": "**",
+            "headers": [
+              {
+                "key": "Strict-Transport-Security",
+                "value": "max-age=31536000; includeSubDomains"
+              },
+              {
+                "key": "X-Content-Type-Options",
+                "value": "nosniff"
+              },
+              {
+                "key": "Referrer-Policy",
+                "value": "strict-origin-when-cross-origin"
+              },
+              {
+                "key": "X-Frame-Options",
+                "value": "DENY"
+              },
+              {
+                "key": "Permissions-Policy",
+                "value": "camera=(), microphone=(), geolocation=(), payment=()"
+              },
+              {
+                "key": "Cross-Origin-Opener-Policy",
+                "value": "same-origin-allow-popups"
+              },
+              {
+                "key": "Content-Security-Policy-Report-Only",
+                "value": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://www.gstatic.com https://fonts.gstatic.com https://*.run.app wss://*.firebaseio.com; frame-src https://*.firebaseapp.com https://accounts.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+              },
+              {
+                "key": "Cache-Control",
+                "value": "no-cache"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    ".firebaserc": {
+      "projects": {
+        "default": "{{baker.firebaseProjectId}}"
+      }
+    }
+  },
+  "nextSteps": [
+    "Put build settings (never secrets) in config/production.json",
+    "scripts/deploy_hosting.sh preview",
+    "scripts/deploy_hosting.sh live"
+  ]
+}

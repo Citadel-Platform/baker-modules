@@ -1,18 +1,16 @@
 {
-  "displayName": "CRM or internal tool — MVP shell and project scaffold",
-  "summary": "The dashboard, plus the Terraform for the client's own project. For a client whose application is deployed into a project of their own from the first day.",
+  "displayName": "CRM or internal tool — on Cloud Run, with the client's project in Terraform",
+  "summary": "The same dashboard, served from Cloud Run behind Firebase Hosting for when it needs server-side routes or secrets, with the client's own project, the service, its registry and its secrets in Terraform.",
   "stack": "flutter-firebase",
   "modules": [
     "frontend.flutter.dashboard",
     "backend.firebase.auth",
     "backend.firebase.firestore",
+    "terraform-project-scaffold",
+    "deploy.gcp.cloudrun.frontend.flutter",
     "platform-api-client",
     "conduit-instrumentation",
-    "terraform-project-scaffold",
     "agent-context-pack"
   ],
-  "nextSteps": [
-    "cd infra && terraform init && terraform plan",
-    "flutter run -d chrome --dart-define=CITADEL_PLATFORM_API_BASE_URL=<address>"
-  ]
+  "nextSteps": []
 }

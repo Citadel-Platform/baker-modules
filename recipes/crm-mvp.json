@@ -1,16 +1,15 @@
 {
-  "displayName": "CRM or internal tool — MVP shell",
-  "summary": "A running Flutter dashboard on CitadelDS v1 with Firebase sign-in, role claims and Firestore behind deny-by-default rules, the data table kit, and the platform and telemetry seams. No screens the client has not asked for, and no invented data.",
+  "displayName": "CRM or internal tool — on Firebase Hosting",
+  "summary": "A Flutter dashboard on CitadelDS v1 with Firebase sign-in, role claims and Firestore behind deny-by-default rules, served from Firebase Hosting with security headers and preview-first deploys. No screens the client has not asked for, and no invented data.",
   "stack": "flutter-firebase",
   "modules": [
     "frontend.flutter.dashboard",
     "backend.firebase.auth",
     "backend.firebase.firestore",
+    "deploy.firebase.hosting.frontend.flutter",
     "platform-api-client",
     "conduit-instrumentation",
     "agent-context-pack"
   ],
-  "nextSteps": [
-    "flutter run -d chrome --dart-define=CITADEL_PLATFORM_API_BASE_URL=<address>"
-  ]
+  "nextSteps": []
 }

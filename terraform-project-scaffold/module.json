@@ -2,6 +2,26 @@
   "displayName": "Terraform project scaffold",
   "layer": "backend",
   "product": "Terraform",
-  "version": "4.1.0",
-  "summary": "The client's own project as far as their application needs it: enabled services and the identity it runs as."
+  "version": "4.2.0",
+  "summary": "The client's own project as far as their application needs it: enabled services and the identity it runs as.",
+  "inputs": {
+    "firebaseProjectId": {
+      "label": "Firebase project ID",
+      "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$",
+      "help": "The Google Cloud / Firebase project this application uses, e.g. acme-crm-prod. It must already exist with Firebase enabled."
+    },
+    "region": {
+      "label": "Region",
+      "pattern": "^[a-z]+-[a-z]+[0-9]$",
+      "help": "The Google Cloud region the application runs in, e.g. asia-southeast1 for Singapore."
+    },
+    "namePrefix": {
+      "label": "Resource name prefix",
+      "pattern": "^[a-z][a-z0-9-]{1,20}$",
+      "help": "Short, lower case, e.g. acme. Prefixes every resource, so two applications in one project do not collide."
+    }
+  },
+  "nextSteps": [
+    "cd infra && terraform init && terraform validate && terraform plan"
+  ]
 }

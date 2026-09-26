@@ -1,0 +1,61 @@
+{
+  "displayName": "Cloud Run for the Flutter web app",
+  "layer": "backend",
+  "product": "Google Cloud",
+  "version": "1.0.0",
+  "summary": "Serves the web app from Cloud Run behind Firebase Hosting, for when the site needs server-side routes or secrets: a three-stage image ending in scratch, a Dart server with the SPA fallback and security headers, Terraform for the service, registry and secrets, a deploy that checks a revision before it takes traffic, rollback, and secret values set from standard input.",
+  "requires": [
+    "frontend.flutter.dashboard",
+    "terraform-project-scaffold"
+  ],
+  "inputs": {
+    "firebaseProjectId": {
+      "label": "Firebase project ID",
+      "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$",
+      "help": "The Google Cloud / Firebase project this application uses, e.g. acme-crm-prod. It must already exist with Firebase enabled."
+    },
+    "region": {
+      "label": "Region",
+      "pattern": "^[a-z]+-[a-z]+[0-9]$",
+      "help": "The Google Cloud region the application runs in, e.g. asia-southeast1 for Singapore."
+    },
+    "namePrefix": {
+      "label": "Resource name prefix",
+      "pattern": "^[a-z][a-z0-9-]{1,20}$",
+      "help": "Short, lower case, e.g. acme. Prefixes every resource, so two applications in one project do not collide."
+    }
+  },
+  "merge": {
+    "firebase.json": {
+      "hosting": {
+        "public": "hosting/public",
+        "ignore": [
+          "firebase.json",
+          "**/.*",
+          "**/node_modules/**"
+        ],
+        "rewrites": [
+          {
+            "source": "**",
+            "run": {
+              "serviceId": "{{baker.namePrefix}}-web",
+              "region": "{{baker.region}}"
+            }
+          }
+        ]
+      }
+    },
+    ".firebaserc": {
+      "projects": {
+        "default": "{{baker.firebaseProjectId}}"
+      }
+    }
+  },
+  "nextSteps": [
+    "cd server && dart pub get && dart analyze && dart test",
+    "cd infra && terraform init && terraform apply",
+    "gcloud auth configure-docker {{baker.region}}-docker.pkg.dev",
+    "scripts/deploy_run.sh deploy",
+    "firebase deploy --only hosting --project {{baker.firebaseProjectId}}"
+  ]
+}
