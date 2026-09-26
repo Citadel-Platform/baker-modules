@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:http/http.dart' as http;
+
 import 'package:shelf/shelf.dart';
 
 import '../api.dart';
@@ -15,6 +17,7 @@ class AppContext {
     required this.internalCaller,
     this.firestore,
     this.tasks,
+    this.google,
     this.environment = const <String, String>{},
   });
 
@@ -28,6 +31,10 @@ class AppContext {
   /// Null only in tests that queue nothing.
   final TaskQueue? tasks;
 
+  /// An HTTP client authorised as the service (`cloud-platform`), for Google
+  /// APIs a feature calls directly (Secret Manager). Null in tests.
+  final http.Client? google;
+
   /// Settings Terraform passes (`api_env`) and secrets (`api_env_secrets`).
   final Map<String, String> environment;
 
@@ -35,6 +42,8 @@ class AppContext {
       firestore ?? (throw StateError('This route needs Firestore.'));
   TaskQueue get queue =>
       tasks ?? (throw StateError('This route needs the work queue.'));
+  http.Client get googleClient =>
+      google ?? (throw StateError('This route needs a Google API client.'));
 
   /// A setting that must be present. A missing one fails, naming it, the
   /// first request that needs it: a 500 with the name in the log, never a

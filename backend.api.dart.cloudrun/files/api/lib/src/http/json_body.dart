@@ -34,6 +34,9 @@ class JsonBody {
     return JsonBody._(decoded);
   }
 
+  /// The whole object, for nested structures a handler checks itself.
+  Map<String, Object?> get raw => _data;
+
   /// A body built in code, for tests.
   JsonBody.of(Map<String, Object?> data) : _data = data;
 

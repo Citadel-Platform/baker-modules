@@ -1,0 +1,58 @@
+# The ledger's routes; test/openapi_test.dart reads this with openapi.yaml.
+# Amounts are {minor, currency}; nothing here approves, sends, voids or pays.
+paths:
+  /v1/ledger/status:
+    get:
+      summary: notConfigured, notConnected, unreachable or connected.
+      security: [{firebase: []}]
+      responses: {"200": {description: The connection's state.}}
+  /v1/ledger/xero/connect:
+    post:
+      summary: The Xero authorize link for an administrator.
+      security: [{firebase: []}]
+      responses: {"200": {description: "{url}"}}
+  /v1/ledger/xero/callback:
+    get:
+      summary: Xero's redirect. Authorised by the one-use state, not a sign-in.
+      security: []
+      responses: {"200": {description: Connected, or why not.}}
+  /v1/ledger/xero:
+    delete:
+      summary: Disconnects the organisation. The books are unchanged.
+      security: [{firebase: []}]
+      responses: {"204": {description: Disconnected.}}
+  /v1/ledger/contacts:
+    post:
+      summary: A customer, found by externalRef or created. Idempotency-Key required.
+      security: [{firebase: []}]
+      responses: {"201": {description: The contact.}}
+  /v1/ledger/invoices:
+    post:
+      summary: A DRAFT sales invoice, once per externalRef. Idempotency-Key required.
+      security: [{firebase: []}]
+      responses: {"201": {description: The invoice.}, "409": {description: No ledger connected.}, "422": {description: The ledger refused it, with its reason.}, "503": {description: The ledger did not answer; Retry-After when it said.}}
+  /v1/ledger/invoices/{id}:
+    get:
+      summary: One invoice as the ledger has it now.
+      security: [{firebase: []}]
+      responses: {"200": {description: The invoice.}, "404": {description: Not in the ledger.}}
+  /v1/ledger/receivables:
+    get:
+      summary: Approved invoices still owed, oldest first, with totals by age.
+      security: [{firebase: []}]
+      responses: {"200": {description: Receivables.}}
+  /service/ledger/contacts:
+    post:
+      summary: For Exigence, as EXIGENCE_CALLER.
+      security: [{google: []}]
+      responses: {"201": {description: The contact.}}
+  /service/ledger/invoices:
+    post:
+      summary: For Exigence, as EXIGENCE_CALLER. Drafts only.
+      security: [{google: []}]
+      responses: {"201": {description: The invoice.}}
+  /service/ledger/receivables:
+    get:
+      summary: For Exigence, as EXIGENCE_CALLER.
+      security: [{google: []}]
+      responses: {"200": {description: Receivables.}}

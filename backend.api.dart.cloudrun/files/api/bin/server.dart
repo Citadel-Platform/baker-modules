@@ -93,6 +93,7 @@ Future<void> main() async {
                   caller: _required(env, 'INTERNAL_CALLER'),
                   audience: _required(env, 'OIDC_AUDIENCE'),
                 ),
+          google: google,
           environment: env,
         ),
       ),

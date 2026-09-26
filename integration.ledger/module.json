@@ -1,0 +1,56 @@
+{
+  "displayName": "Ledger (Xero first)",
+  "layer": "backend",
+  "product": "Xero",
+  "version": "1.0.0",
+  "summary": "The client's accounting system behind one contract the app and Exigence share: customers and draft invoices, idempotent twice over (a Citadel reference on the document, and the ledger's idempotency key), invoices and aged receivables read back. Xero first, connected by an administrator; its rotating refresh token kept in Secret Manager and refreshed under a lock. Never approves, sends, voids or pays.",
+  "requires": [
+    "backend.api.dart.cloudrun"
+  ],
+  "inputs": {
+    "firebaseProjectId": {
+      "label": "Firebase project ID",
+      "pattern": "^[a-z][a-z0-9-]{4,28}[a-z0-9]$",
+      "help": "The Google Cloud / Firebase project this application uses, e.g. acme-crm-prod. It must already exist with Firebase enabled."
+    },
+    "namePrefix": {
+      "label": "Resource name prefix",
+      "pattern": "^[a-z][a-z0-9-]{1,20}$",
+      "help": "Short, lower case, e.g. acme. Prefixes every resource, so two applications in one project do not collide."
+    }
+  },
+  "insert": {
+    "api/lib/routes/app_routes.dart": {
+      "imports": [
+        "import '../ledger/ledger_routes.dart';"
+      ],
+      "routes": [
+        "...ledgerRoutes(context),"
+      ]
+    }
+  },
+  "merge": {
+    "infra/app.auto.tfvars.json": {
+      "app_secrets": {
+        "XERO_CLIENT_ID": "Xero app client id",
+        "XERO_CLIENT_SECRET": "Xero app client secret"
+      },
+      "api_env_secrets": {
+        "XERO_CLIENT_ID": "XERO_CLIENT_ID",
+        "XERO_CLIENT_SECRET": "XERO_CLIENT_SECRET"
+      },
+      "api_env": {
+        "XERO_TOKEN_SECRET": "projects/{{baker.firebaseProjectId}}/secrets/{{baker.namePrefix}}-xero-refresh",
+        "EXIGENCE_CALLER": ""
+      }
+    }
+  },
+  "nextSteps": [
+    "cd infra && terraform apply",
+    "Xero developer portal: create a Web app; add the xero_redirect_uri output as its redirect URI",
+    "printf %s \"$XERO_CLIENT_ID\" | scripts/secrets.sh set XERO_CLIENT_ID",
+    "printf %s \"$XERO_CLIENT_SECRET\" | scripts/secrets.sh set XERO_CLIENT_SECRET",
+    "scripts/deploy_api.sh deploy",
+    "As an admin: POST /v1/ledger/xero/connect, open the url, choose the organisation; GET /v1/ledger/status reads connected"
+  ]
+}
