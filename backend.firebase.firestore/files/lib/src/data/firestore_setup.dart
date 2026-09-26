@@ -30,7 +30,9 @@ Future<List<Override>> firestoreOverrides() async {
     databaseId: firestoreDatabase,
   );
   if (useFirebaseEmulators) {
-    db.useFirestoreEmulator(firebaseEmulatorHost, 8080);
+    // 8180, not Firestore's default 8080: the API and the web server listen
+    // on 8080 locally, as Cloud Run expects, and a shared port refuses one.
+    db.useFirestoreEmulator(firebaseEmulatorHost, 8180);
   }
   return <Override>[firestoreProvider.overrideWithValue(db)];
 }

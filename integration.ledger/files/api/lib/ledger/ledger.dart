@@ -18,6 +18,10 @@ abstract interface class Ledger {
   Future<LedgerContact> contact(ContactRequest contact);
 
   /// A draft sales invoice, or the one already made for the same reference.
+  ///
+  /// Xero does not check a draft's account codes (seen 26/09/26): one the
+  /// organisation lacks is accepted, and fails only when a person approves
+  /// it. Take codes from the client's chart of accounts.
   Future<LedgerInvoice> draftInvoice(InvoiceRequest invoice);
 
   Future<LedgerInvoice?> invoice(String ledgerId);
